@@ -1,0 +1,61 @@
+from pydantic import BaseModel, EmailStr, Field, HttpUrl, validator
+from typing import Optional
+from datetime import datetime
+
+class Usuario(BaseModel):
+    id: Optional[int] = Field(None, description="ID do usuário, gerado automaticamente")
+    nome: str
+    email: EmailStr
+    senha: str
+    ativo: bool = True
+
+    @validator("senha")
+    def senha_nao_nula(cls, v: str) -> str:
+        if v is None:
+            raise ValueError("Senha não pode ser nula")
+        return v
+    
+    @validator("email")
+    def email_valido(cls, v: str) -> str:
+        if "@" not in v:
+            raise ValueError("E-mail inválido")
+        return v
+
+class Evento(BaseModel):
+    id: Optional[int] = Field(None, description="ID do evento, gerado automaticamente")
+    nome: str
+    descricao: str
+    local: str
+    data_hora: datetime
+    valor: Optional[float] = 0.0  # Pode ser gratuito, por isso é opcional e por padrão 0.0
+    foto_url: Optional[HttpUrl] = None  # URL para a foto do evento
+    likes: int = 0
+
+
+class EventoLike(BaseModel):
+    evento_id: int
+    usuario_email: EmailStr
+    gostei: bool
+
+class EventoResponse(Evento):
+    gostei_count: int
+
+class UserResponse(BaseModel):
+    id: int
+    nome: str
+    email: EmailStr
+    ativo: bool
+
+# Para atualizações de eventos ou usuários, permitindo alterar somente os campos específicos
+class EventoUpdate(BaseModel):
+    nome: Optional[str] = None
+    descricao: Optional[str] = None
+    local: Optional[str] = None
+    data_hora: Optional[datetime] = None
+    valor: Optional[float] = None
+    foto_url: Optional[HttpUrl] = None
+
+class UsuarioUpdate(BaseModel):
+    nome: Optional[str] = None
+    email: Optional[EmailStr] = None
+    ativo: Optional[bool] = None
