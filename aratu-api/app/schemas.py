@@ -31,6 +31,9 @@ class Evento(BaseModel):
     foto_url: Optional[HttpUrl] = None  # URL para a foto do evento
     likes: int = 0
 
+    class Config:
+        orm_mode = True
+
 
 class EventoLike(BaseModel):
     evento_id: int
@@ -38,13 +41,16 @@ class EventoLike(BaseModel):
     gostei: bool
 
 class EventoResponse(Evento):
-    gostei_count: int
+    pass
 
 class UserResponse(BaseModel):
     id: int
     nome: str
     email: EmailStr
     ativo: bool
+
+    class Config:
+        orm_mode = True
 
 # Para atualizações de eventos ou usuários, permitindo alterar somente os campos específicos
 class EventoUpdate(BaseModel):
