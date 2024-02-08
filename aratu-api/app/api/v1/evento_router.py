@@ -17,29 +17,24 @@ async def criar_evento(evento: Evento, db: Session = Depends(get_db)):
         data_hora=evento.data_hora,
         valor=evento.valor,
         foto_url=evento.foto_url,
-        likes=evento.likes
+        likes=0
     )
     db.add(novo_evento)
     db.commit()
     db.refresh(novo_evento)
 
-    evento_response = {
-        "id": novo_evento.id,
-        "nome": novo_evento.nome,
-        "descricao": novo_evento.descricao,
-        "local": novo_evento.local,
-        "data_hora": novo_evento.data_hora,
-        "valor": novo_evento.valor,
-        "foto_url": novo_evento.foto_url,
-        "likes": novo_evento.likes,
-        "gostei_count": 0  # Adicione outros campos necessários aqui
-    }
+    evento_response = EventoResponse.from_orm(novo_evento)
+    # Adicione campos adicionais se necessário
+    evento_response.gostei_count = 0
 
     return evento_response
 
 
 @evento_router.get("/eventos/", response_model=list[EventoResponse])
 async def listar_eventos(db: Session = Depends(get_db)):
-    # Busca todos os eventos no banco de dados
     eventos = db.query(ModelEvento).all()
-    return eventos
+    
+    # Use from_orm para criar uma lista de EventoResponse a partir dos eventos
+    eventos_response = [EventoResponse.from_orm(evento) for evento in eventos]
+    
+    return eventos_response

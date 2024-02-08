@@ -20,13 +20,7 @@ async def criar_usuario(usuario: Usuario, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(novo_usuario)
 
-    usuario_response = {
-        "id": novo_usuario.id,
-        "nome": novo_usuario.nome,
-        "email": novo_usuario.email,
-        "ativo": novo_usuario.ativo
-    }
-    return usuario_response
+    return UserResponse.from_orm(novo_usuario)
 
 
 @usuario_router.get("/usuarios/{usuario_id}", response_model=UserResponse)
@@ -35,5 +29,5 @@ async def buscar_usuario(usuario_id: int, db: Session = Depends(get_db)):
     usuario = db.query(ModelUsuario).filter(ModelUsuario.id == usuario_id).first()
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
-    return usuario
+    return UserResponse.from_orm(usuario)
 
