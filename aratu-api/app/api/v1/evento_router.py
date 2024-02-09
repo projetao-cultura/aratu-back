@@ -7,7 +7,7 @@ from app.db.base import get_db
 
 evento_router = APIRouter()
 
-@evento_router.post("/eventos/", response_model=EventoResponse, status_code=status.HTTP_201_CREATED)
+@evento_router.post("/create/", response_model=EventoResponse, status_code=status.HTTP_201_CREATED)
 async def criar_evento(evento: Evento, db: Session = Depends(get_db)):
     # Cria um novo registro de evento no banco de dados
     novo_evento = ModelEvento(
@@ -24,13 +24,11 @@ async def criar_evento(evento: Evento, db: Session = Depends(get_db)):
     db.refresh(novo_evento)
 
     evento_response = EventoResponse.from_orm(novo_evento)
-    # Adicione campos adicionais se necessário
-    evento_response.gostei_count = 0
 
     return evento_response
 
 
-@evento_router.get("/eventos/", response_model=list[EventoResponse])
+@evento_router.get("/list/", response_model=list[EventoResponse])
 async def listar_eventos(db: Session = Depends(get_db)):
     eventos = db.query(ModelEvento).all()
     
