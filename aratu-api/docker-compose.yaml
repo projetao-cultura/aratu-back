@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+  aratu_database:
+    image: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+
+  aratu:
+    image: aratu
+    entrypoint: ./entrypoint.sh
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - aratu_database
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+
+volumes:
+  pgdata:
