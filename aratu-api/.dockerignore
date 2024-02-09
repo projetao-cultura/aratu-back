@@ -1,50 +1,49 @@
 # flyctl launch added from .gitignore
 # Python
-**\__pycache__
-**\*.py[cod]
-**\*$py.class
+__pycache__/
+*.py[cod]
+*$py.class
 
 # Virtual Environment
-**\venv
-**\env
-**\ENV
+**/venv/
+env/
+ENV/
 
 # IDE
-**\.vscode
-**\.idea
+.vscode/
+.idea/
 
 # Logs
-**\*.log
+*.log
 
 # Dependency directories
-**\lib
-**\libs
-**\Library
-**\bin
-**\build
-**\dist
-**\node_modules
-**\bower_components
+lib/
+libs/
+Library/
+bin/
+build/
+dist/
+node_modules/
+bower_components/
 
 # Compiled files
-**\*.pyc
-**\*.pyo
-**\*.pyd
-**\*.so
-**\*.dll
-**\*.exe
-**\*.out
-**\*.app
+*.pyc
+*.pyo
+*.pyd
+*.so
+*.dll
+*.exe
+*.out
+*.app
 
 # Miscellaneous
-**\*.swp
-**\*.bak
-**\*.tmp
-**\*.tmp.*
-**\*~
-**\*.DS_Store
-**\Thumbs.db
-**\ehthumbs.db
-**\Desktop.ini
-**\database.db
-fly.toml
+*.swp
+*.bak
+*.tmp
+*.tmp.*
+*~
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+database.db
