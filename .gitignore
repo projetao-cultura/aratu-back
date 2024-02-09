@@ -34,7 +34,6 @@ bower_components/
 *.exe
 *.out
 *.app
-.env
 
 # Miscellaneous
 *.swp

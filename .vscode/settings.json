@@ -1,0 +1,3 @@
+{
+  "python.analysis.extraPaths": ["./aratu-api/app"]
+}
