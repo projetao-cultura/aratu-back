@@ -1,75 +1,52 @@
-# Aratu - back end
+# Aratu API v0.1
 
-Este é o repositório do backend da aplicação ARATU
+Bem-vindo à Aratu API, o backend da aplicação Aratu, um app de fomento ao turismo local em Recife-Pernambuco. Esta API fornece os serviços e dados necessários para explorar os pontos turísticos, eventos e atrações da região.
 
-## Project Structure
+## Como Rodar Localmente
 
-The project has the following structure:
+### Clonando o Projeto
 
-```
-my-fastapi-app
-├── .github
-│   └── workflows
-│       └── deploy.yml
-├── app
-│   ├── main.py
-│   ├── api
-│   │   └── v1
-│   │       └── __init__.py
-│   ├── core
-│   │   └── config.py
-│   ├── db
-│   │   └── base.py
-│   ├── models
-│   │   └── __init__.py
-│   └── services
-│       └── __init__.py
-├── tests
-│   └── __init__.py
-├── Dockerfile
-├── requirements.txt
-└── README.md
-```
-
-## Getting Started
-
-To get started with this project, follow these steps:
-
-1. Clone the repository:
+Para começar, clone o repositório em sua máquina local:
 
 ```bash
-git clone https://github.com/username/my-fastapi-app.git
-```
-
-2. Change into the project directory:
-
-```bash
+git clone https://github.com/projetao-cultura/aratu-back.git
 cd aratu-api
 ```
 
-3. Install the dependencies:
+### Rodando Localmente sem Docker
+
+Para rodar a aplicação localmente sem Docker, primeiro navegue até a pasta 'aratu-api', e então execute:
 
 ```bash
-pip install -r requirements.txt
+uvicorn main:app --reload
 ```
 
-4. Run the application:
+Isso iniciará o servidor de desenvolvimento localmente com recarregamento automático habilitado.
+
+### Rodando com Docker (Recomendado)
+
+O jeito mais fácil de rodar a aplicação é usando o Docker. Se você ainda não tem o Docker Desktop instalado, você pode baixá-lo e instalá-lo a partir do site oficial do Docker.
+
+Após instalar o Docker Desktop, você precisará instalar o docker-compose para orquestrar o container da aplicação. A instalação do Docker Desktop já inclui o docker-compose.
+
+Para iniciar a aplicação usando o Docker, execute o seguinte comando no diretório 'aratu-api' do projeto:
 
 ```bash
-uvicorn app.main:app --reload
+docker-compose up --build
 ```
 
-The application will be available at `http://localhost:8000`.
+Isso construirá a imagem Docker da aplicação (se necessário) e iniciará todos os serviços definidos no arquivo 'docker-compose.yml'.
 
-## Deployment
+## Deploy Automático via GitHub Actions
 
-This project includes a CD pipeline for deployment on GCP. The pipeline is defined in the `.github/workflows/deploy.yml` file. It is triggered on every push to the `main` branch.
+Este projeto está configurado para fazer deploy automático para o ambiente de produção sempre que mudanças são commitadas na branch main. O processo é gerenciado pelo GitHub Actions, assegurando que a última versão do código esteja sempre disponível.
 
-To deploy the application, you need to set up the following secrets in your GitHub repository:
+### Desenvolvendo Novas Features
 
-- `GCP_PROJECT_ID`: The ID of your GCP project.
-- `GCP_SA_KEY`: The JSON key of your GCP service account.
+Para começar a trabalhar em uma nova feature, crie uma branch a partir da main:
 
-## Contributing
+```bash
+git checkout -b nome-da-sua-branch
+```
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Após finalizar o desenvolvimento, submeta suas mudanças via Pull Request para a branch main. Após a revisão e aprovação do código, o merge iniciará o processo de deploy automático.
