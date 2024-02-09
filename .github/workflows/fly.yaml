@@ -1,8 +1,10 @@
 name: Aratu Fly.io Deploy
+
 on:
   push:
     branches:
       - main
+
 jobs:
   deploy:
     name: Deploy aratu-api
@@ -10,7 +12,18 @@ jobs:
     concurrency: deploy-group # Ensure only one deploy job runs at a time
     steps:
       - uses: actions/checkout@v3
+
+      # Configura o flyctl
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run: flyctl deploy --remote-only
+
+      # Muda para a subpasta onde a API está localizada antes de implantar
+      - name: Change to API directory
+        run: cd aratu-api
+
+      # Executa o deploy usando flyctl
+      - name: Deploy to Fly.io
+        run: |
+          cd aratu-api
+          flyctl deploy --remote-only
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
