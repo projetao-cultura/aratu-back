@@ -1,3 +1,4 @@
+from fastapi.params import Query
 from pydantic import BaseModel, EmailStr, Field, HttpUrl, validator
 from typing import Optional
 from datetime import datetime
@@ -42,6 +43,22 @@ class EventoLike(BaseModel):
 
 class EventoResponse(Evento):
     pass
+
+class EventoList(BaseModel):
+    pages: int  
+    eventos: list[EventoResponse]
+ 
+class Pagination(BaseModel):
+    perPage: int
+    page: int
+    order: str = "asc" 
+
+def pagination_params(
+        page: int = Query(ge=1, required=False, default=1, le=500000), 
+        perPage: int = Query(ge=1, le=100, required=False, default=10), 
+        order: str = Query(default="asc")
+        ):
+        return Pagination(perPage=perPage, page=page, order=order)
 
 class UserResponse(BaseModel):
     id: int
