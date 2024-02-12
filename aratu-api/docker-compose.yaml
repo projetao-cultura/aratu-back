@@ -14,7 +14,7 @@ services:
 
   aratu:
     image: aratu
-    entrypoint: ./entrypoint.sh
+    entrypoint: ["/app/entrypoint.sh"]
     build:
       context: .
       dockerfile: Dockerfile
