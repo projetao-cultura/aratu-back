@@ -69,6 +69,13 @@ class UserResponse(BaseModel):
     class Config:
         orm_mode = True
 
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    username: Optional[str] = None
+
 # Para atualizações de eventos ou usuários, permitindo alterar somente os campos específicos
 class EventoUpdate(BaseModel):
     nome: Optional[str] = None
