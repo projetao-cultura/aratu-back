@@ -67,9 +67,17 @@ async def update_event(
 
     return EventoResponse.from_orm(evento_db)
 
+#create an endpoint to list one event by id
+@evento_router.get("/list/{evento_id}", response_model=EventoResponse, status_code=status.HTTP_200_OK, summary='Listar um Evento')
+async def listar_evento_por_id(evento_id: int, db: Session = Depends(get_db)):
+    evento = db.query(ModelEvento).filter(ModelEvento.id == evento_id).first()
+    if not evento:
+        raise HTTPException(status_code=404, detail="Evento não encontrado")
+    return EventoResponse.from_orm(evento)
+
 
 @evento_router.get("/list/allEvents", response_model=list[EventoResponse])
-async def listar_eventos(db: Session = Depends(get_db)):
+async def listar_todos_eventos(db: Session = Depends(get_db)):
     eventos = db.query(ModelEvento).all()
     
     # Use from_orm para criar uma lista de EventoResponse a partir dos eventos
