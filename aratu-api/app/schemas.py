@@ -1,6 +1,6 @@
 from fastapi.params import Query
 from pydantic import BaseModel, EmailStr, Field, HttpUrl, validator
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 class Usuario(BaseModel):
@@ -26,20 +26,43 @@ class Evento(BaseModel):
     id: Optional[int] = Field(None, description="ID do evento, gerado automaticamente")
     nome: str
     descricao: str
+    banner: Optional[HttpUrl] = None
+    categoria: List[str] = []
+    avaliacao: Optional[float] = None
     local: str
     data_hora: datetime
-    valor: Optional[float] = 0.0  # Pode ser gratuito, por isso é opcional e por padrão 0.0
-    foto_url: Optional[HttpUrl] = None  # URL para a foto do evento
-    likes: int = 0
+    valor: Optional[float] = Field(0.0, description="Valor do ingresso para o evento, gratuito por padrão.")
+    onde_comprar_ingressos: Optional[HttpUrl] = None
+    usuarios_que_querem_ir: List[int] = Field(default_factory=list, description="Lista de IDs de usuários que querem ir ao evento")
+    usuarios_que_foram: List[int] = Field(default_factory=list, description="Lista de IDs de usuários que foram ao evento")
+    usuarios_que_avaliaram: List[int] = Field(default_factory=list, description="Lista de IDs de usuários que avaliaram o evento")
 
     class Config:
         orm_mode = True
 
 
-class EventoLike(BaseModel):
+class AvaliacaoEvento(BaseModel):
     evento_id: int
-    usuario_email: EmailStr
-    gostei: bool
+    usuario_id: int 
+    avaliacao: int  
+
+    @validator('evento_id')
+    def evento_deve_existir(cls, v, values):
+        if v not in values['evento_id']:
+            raise ValueError("Evento não existe")
+        return v
+    
+    @validator('usuario_id')
+    def usuario_deve_existir(cls, v, values):
+        if v not in values['usuario_id']:
+            raise ValueError("Usuário não existe")
+        return v
+
+    @validator('avaliacao')
+    def avaliacao_deve_ser_valida(cls, v):
+        if v < 1 or v > 5:
+            raise ValueError("A avaliação deve ser entre 1 e 5")
+        return v
 
 class EventoResponse(Evento):
     pass
@@ -47,24 +70,11 @@ class EventoResponse(Evento):
 class EventoList(BaseModel):
     pages: int  
     eventos: list[EventoResponse]
- 
-class Pagination(BaseModel):
-    perPage: int
-    page: int
-    order: str = "asc" 
-
-def pagination_params(
-        page: int = Query(ge=1, required=False, default=1, le=500000), 
-        perPage: int = Query(ge=1, le=100, required=False, default=10), 
-        order: str = Query(default="asc")
-        ):
-        return Pagination(perPage=perPage, page=page, order=order)
 
 class UserResponse(BaseModel):
     id: int
     nome: str
     email: EmailStr
-    ativo: bool
 
     class Config:
         orm_mode = True
