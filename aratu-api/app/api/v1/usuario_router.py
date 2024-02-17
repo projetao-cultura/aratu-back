@@ -9,7 +9,7 @@ from app.db.base import get_db
 
 usuario_router = APIRouter()
 
-@usuario_router.post("/create/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+@usuario_router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def criar_usuario(usuario: Usuario, db: Session = Depends(get_db)):
     # Verifica se o e-mail já está cadastrado
     db_usuario = db.query(ModelUsuario).filter(ModelUsuario.email == usuario.email).first()
@@ -20,6 +20,7 @@ async def criar_usuario(usuario: Usuario, db: Session = Depends(get_db)):
     
     # Cria um novo usuário
     novo_usuario = ModelUsuario(nome=usuario.nome, email=usuario.email, senha=hashed_password, ativo=usuario.ativo)
+
     db.add(novo_usuario)
     db.commit()
     db.refresh(novo_usuario)
