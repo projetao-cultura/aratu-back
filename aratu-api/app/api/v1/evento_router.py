@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, Depends, status, Query
 from sqlalchemy.orm import Session
 
 from app.models.models import Evento as ModelEvento 
-from app.schemas import Evento, EventoList, EventoResponse, pagination_params, Pagination
+from app.schemas import Evento, EventoList, EventoResponse
 from app.db.base import get_db
 
 from typing import List
@@ -12,15 +12,15 @@ evento_router = APIRouter()
 
 @evento_router.post("/create/", response_model=EventoResponse, status_code=status.HTTP_201_CREATED)
 async def criar_evento(evento: Evento, db: Session = Depends(get_db)):
-    # Cria um novo registro de evento no banco de dados
     novo_evento = ModelEvento(
         nome=evento.nome,
         descricao=evento.descricao,
+        banner=evento.banner,
+        categoria=evento.categoria,
         local=evento.local,
         data_hora=evento.data_hora,
         valor=evento.valor,
-        foto_url=evento.foto_url,
-        likes=0
+        onde_comprar_ingressos=evento.onde_comprar_ingressos
     )
     db.add(novo_evento)
     db.commit()
