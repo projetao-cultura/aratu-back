@@ -53,8 +53,10 @@ class ControleCarga(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     fonte = Column(String)
-    inic_exec = Column(String)
-    fim_exec = Column(String)
+    inic_exec = Column(DateTime)
+    fim_exec = Column(DateTime)
+    dt_inic = Column(DateTime)
+    dt_fim = Column(DateTime)
     qtd_src_total = Column(Integer, default=0)
     qtd_sucesso = Column(Integer, default=0)
     status = Column(Enum('ERRO', 'EM_PROGRESSO', 'SUCESSO', name="tipo_categoria"))

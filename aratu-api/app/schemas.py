@@ -1,3 +1,4 @@
+from enum import Enum
 from fastapi.params import Query
 from pydantic import BaseModel, EmailStr, Field, HttpUrl, validator
 from typing import Optional, List
@@ -99,3 +100,19 @@ class UsuarioUpdate(BaseModel):
     nome: Optional[str] = None
     email: Optional[EmailStr] = None
     ativo: Optional[bool] = None
+
+class ControleCargaStatus(str, Enum):
+    ERRO = 'ERRO'
+    EM_PROGRESSO = 'EM_PROGRESSO'
+    SUCESSO = 'SUCESSO'
+
+class ControleCarga(BaseModel):
+    id: Optional[int] = Field(None, description="ID do controle de carga, gerado automaticamente")
+    fonte: str
+    inic_exec: datetime
+    fim_exec: datetime
+    dt_inic: datetime
+    dt_fim: datetime
+    qtd_src_total: int
+    qtd_sucesso: int
+    status: ControleCargaStatus
