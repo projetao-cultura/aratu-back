@@ -2,6 +2,7 @@ from datetime import datetime
 from math import ceil
 from fastapi import APIRouter, HTTPException, Depends, status, Query
 from sqlalchemy.orm import Session
+from sqlalchemy import and_
 
 from app.models.models import Evento as ModelEvento, ControleCarga
 from app.schemas import Evento, EventoList, EventoResponse
@@ -42,19 +43,8 @@ async def listar_evento_por_id(evento_id: int, db: Session = Depends(get_db)):
 @evento_router.post("/populate/", status_code=status.HTTP_201_CREATED)
 async def criar_eventos_from_api(db: Session = Depends(get_db)):
     try:
-        ultima_carga = db.query(ControleCarga).filter_by(status="SUCESSO").order_by(ControleCarga.fim_exec.desc()).first()
-
-        # Período de carga
-        if ultima_carga:
-            start_date = ultima_carga["dt_fim"]
-            end_date = datetime.today().strftime("%Y-%m-%d")
-        else:
-            print("Nenhuma carga bem-sucedida encontrada.")
-            start_date = None
-            end_date = None
-
         # Total que vai ser carregado
-        count_total = count_eventos_sympla(start_date=start_date, end_date=end_date)
+        count_total = count_eventos_sympla()
 
         controle_carga = ControleCarga(
             fonte = "SYMPLA",
@@ -63,8 +53,6 @@ async def criar_eventos_from_api(db: Session = Depends(get_db)):
             qtd_src_total = count_total,
             qtd_sucesso = None,
             status = "EM_PROGRESSO",
-            dt_inic = start_date,
-            dt_fim = end_date
         )
 
         db.add(controle_carga)
@@ -72,18 +60,46 @@ async def criar_eventos_from_api(db: Session = Depends(get_db)):
         db.refresh(controle_carga)
 
         # Carregar eventos
-        eventos = get_eventos_sympla(start_date=start_date, end_date=end_date)
+        eventos = get_eventos_sympla()
         print(f"Eventos carregados: {len(eventos)}")
         for evento_api in eventos:
-            evento_db = ModelEvento(
-                nome=evento_api["name"],
-                descricao="", ## TODO: Check this
-                local=f"{evento_api['location']['address']} - {evento_api['location']['city']}, {evento_api['location']['state']}",
-                data_hora=evento_api["start_date"],
-                foto_url=evento_api["images"]["original"],
-            )
-            db.add(evento_db)
-        print("Eventos salvos")
+            evento_db = db.query(ModelEvento).filter(
+                and_(ModelEvento.id_sistema_origem == evento_api["id"], 
+                     ModelEvento.fonte == controle_carga.fonte)).first()
+            
+            if evento_db:
+                # Atualiza o registro existente
+                evento_db.nome = evento_api["name"]
+                evento_db.descricao = ""  # TODO: Check this
+                evento_db.local = evento_api["location"]["name"]
+                evento_db.endereco = f"{evento_api['location']['address']} - {evento_api['location']['city']}, {evento_api['location']['state']}"
+                evento_db.data_hora = evento_api["start_date"]
+                evento_db.data_fim = evento_api["end_date"]
+                evento_db.banner = evento_api["images"]["original"]
+                evento_db.onde_comprar_ingressos = evento_api["url"]
+                evento_db.organizador = evento_api['organizer']['name']
+                evento_db.gratis = evento_api['need_pay']
+                evento_db.categoria = evento_api['category']
+                evento_db.atualizado_em = datetime.now()
+                db.add(evento_db)
+            else:
+                # Cria um novo registro
+                new_evento = ModelEvento(
+                    nome=evento_api["name"],
+                    descricao="",  # TODO: Check this
+                    local=evento_api["location"]["name"],
+                    endereco=f"{evento_api['location']['address']} - {evento_api['location']['city']}, {evento_api['location']['state']}",
+                    data_hora=evento_api["start_date"],
+                    data_fim=evento_api["end_date"],
+                    banner=evento_api["images"]["original"],
+                    id_sistema_origem=evento_api["id"],
+                    fonte=controle_carga.fonte,
+                    organizador=evento_api['organizer']['name'],
+                    gratis=evento_api['need_pay'],
+                    categoria = evento_api['category'],
+                    atualizado_em=datetime.now()
+                )
+                db.add(new_evento)
 
         controle_carga.status = "SUCESSO"
         controle_carga.qtd_sucesso = len(eventos)
