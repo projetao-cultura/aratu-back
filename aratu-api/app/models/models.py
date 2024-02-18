@@ -25,14 +25,21 @@ class Evento(Base):
     banner = Column(String) 
     categoria = Column(ARRAY(String))
     local = Column(String)
+    endereco = Column(String)
     data_hora = Column(DateTime)
+    data_fim = Column(DateTime)
     valor = Column(Float, default=0.0)
     onde_comprar_ingressos = Column(String)
+    id_sistema_origem = Column(Integer)
+    fonte = Column(String)
+    organizador = Column(String)
+    gratis = Column(Boolean)
+    atualizado_em = Column(DateTime)
     
     avaliacoes = relationship("Avaliacao", back_populates="evento")
 
     def __repr__(self):
-        return f"<Evento(nome='{self.nome}', descricao='{self.descricao}', local='{self.local}', data_hora='{self.data_hora}', valor={self.valor}, banner='{self.banner}')>"
+        return f"<Evento(nome='{self.nome}', descricao='{self.descricao}', local='{self.local}', data_hora='{self.data_hora}', data_fim='{self.data_fim}', valor={self.valor}, onde_comprar_ingressos='{self.onde_comprar_ingressos}', id_sistema_origem={self.id_sistema_origem}, fonte='{self.fonte}', organizador='{self.organizador}', gratis={self.gratis})>"
     
 class Avaliacao(Base):
     __tablename__ = "avaliacoes"
@@ -47,7 +54,7 @@ class Avaliacao(Base):
     
     def __repr__(self):
         return f"<Avaliacao(evento_id={self.evento_id}, usuario_id={self.usuario_id}, avaliacao={self.avaliacao})>"
-
+    
 class ControleCarga(Base):
     __tablename__ = "controle_carga"
     

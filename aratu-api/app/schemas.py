@@ -31,7 +31,14 @@ class Evento(BaseModel):
     categoria: List[str] = []
     avaliacao: Optional[float] = None
     local: str
+    endereco: str
     data_hora: datetime
+    data_fim: datetime
+    id_sistema_origem: Optional[int] = Field(None, description="ID do evento no sistema de origem")
+    fonte: str
+    organizador: str
+    gratis: bool
+    atualizado_em: datetime
     valor: Optional[float] = Field(0.0, description="Valor do ingresso para o evento, gratuito por padrão.")
     onde_comprar_ingressos: Optional[HttpUrl] = None
     usuarios_que_querem_ir: List[int] = Field(default_factory=list, description="Lista de IDs de usuários que querem ir ao evento")
