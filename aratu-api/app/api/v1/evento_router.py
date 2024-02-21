@@ -1,6 +1,7 @@
 from datetime import datetime
 from math import ceil
 from fastapi import APIRouter, HTTPException, Depends, status, Query
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 
@@ -16,14 +17,21 @@ evento_router = APIRouter()
 @evento_router.post("/", response_model=EventoResponse, status_code=status.HTTP_201_CREATED)
 async def criar_evento(evento: Evento, db: Session = Depends(get_db)):
     novo_evento = ModelEvento(
-        nome=evento.nome,
-        descricao=evento.descricao,
-        banner=evento.banner,
-        categoria=evento.categoria,
-        local=evento.local,
-        data_hora=evento.data_hora,
-        valor=evento.valor,
-        onde_comprar_ingressos=evento.onde_comprar_ingressos
+    nome=evento.nome,
+    descricao=evento.descricao,
+    banner=evento.banner,
+    categoria=evento.categoria,
+    local=evento.local,
+    endereco=evento.endereco,
+    data_hora=evento.data_hora,
+    data_fim=evento.data_fim,
+    id_sistema_origem=evento.id_sistema_origem,
+    fonte=evento.fonte,
+    organizador=evento.organizador,
+    gratis=evento.gratis,
+    atualizado_em=evento.atualizado_em,
+    valor=evento.valor,
+    onde_comprar_ingressos=evento.onde_comprar_ingressos,
     )
     db.add(novo_evento)
     db.commit()
@@ -157,9 +165,9 @@ async def deletar_evento(
     db.delete(evento)
     db.commit()
     
-    return None
+    return Response(content="", status_code=status.HTTP_204_NO_CONTENT)
 
-@evento_router.post("/selectedEvents", response_model=list[EventoResponse])
+@evento_router.get("/selectedEvents", response_model=list[EventoResponse])
 async def listar_eventos_selecionados(
     eventos_ids: List[int],
     db: Session = Depends(get_db)
