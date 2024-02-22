@@ -167,7 +167,7 @@ async def deletar_evento(
     
     return Response(content="", status_code=status.HTTP_204_NO_CONTENT)
 
-@evento_router.get("/selectedEvents", response_model=list[EventoResponse])
+@evento_router.post("/selectedEvents", response_model=list[EventoResponse])
 async def listar_eventos_selecionados(
     eventos_ids: List[int],
     db: Session = Depends(get_db)
