@@ -1,10 +1,14 @@
+from datetime import datetime
 from math import ceil
 from fastapi import APIRouter, HTTPException, Depends, status, Query
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
+from sqlalchemy import and_
 
-from app.models.models import Evento as ModelEvento 
+from app.models.models import Evento as ModelEvento, ControleCarga
 from app.schemas import Evento, EventoList, EventoResponse
 from app.db.base import get_db
+from app.services.crowler_sympla import get_eventos_sympla, count_eventos_sympla
 
 from typing import List
 
@@ -13,14 +17,21 @@ evento_router = APIRouter()
 @evento_router.post("/", response_model=EventoResponse, status_code=status.HTTP_201_CREATED)
 async def criar_evento(evento: Evento, db: Session = Depends(get_db)):
     novo_evento = ModelEvento(
-        nome=evento.nome,
-        descricao=evento.descricao,
-        banner=evento.banner,
-        categoria=evento.categoria,
-        local=evento.local,
-        data_hora=evento.data_hora,
-        valor=evento.valor,
-        onde_comprar_ingressos=evento.onde_comprar_ingressos
+    nome=evento.nome,
+    descricao=evento.descricao,
+    banner=evento.banner,
+    categoria=evento.categoria,
+    local=evento.local,
+    endereco=evento.endereco,
+    data_hora=evento.data_hora,
+    data_fim=evento.data_fim,
+    id_sistema_origem=evento.id_sistema_origem,
+    fonte=evento.fonte,
+    organizador=evento.organizador,
+    gratis=evento.gratis,
+    atualizado_em=evento.atualizado_em,
+    valor=evento.valor,
+    onde_comprar_ingressos=evento.onde_comprar_ingressos,
     )
     db.add(novo_evento)
     db.commit()
@@ -36,6 +47,84 @@ async def listar_evento_por_id(evento_id: int, db: Session = Depends(get_db)):
     if not evento:
         raise HTTPException(status_code=404, detail="Evento não encontrado")
     return EventoResponse.from_orm(evento)
+
+@evento_router.post("/populate/", status_code=status.HTTP_201_CREATED)
+async def criar_eventos_from_api(db: Session = Depends(get_db)):
+    try:
+        # Total que vai ser carregado
+        count_total = count_eventos_sympla()
+
+        controle_carga = ControleCarga(
+            fonte = "SYMPLA",
+            inic_exec = datetime.now(),
+            fim_exec = None,
+            qtd_src_total = count_total,
+            qtd_sucesso = None,
+            status = "EM_PROGRESSO",
+        )
+
+        db.add(controle_carga)
+        db.commit()
+        db.refresh(controle_carga)
+
+        # Carregar eventos
+        eventos = get_eventos_sympla()
+        print(f"Eventos carregados: {len(eventos)}")
+        for evento_api in eventos:
+            evento_db = db.query(ModelEvento).filter(
+                and_(ModelEvento.id_sistema_origem == evento_api["id"], 
+                     ModelEvento.fonte == controle_carga.fonte)).first()
+            
+            if evento_db:
+                # Atualiza o registro existente
+                evento_db.nome = evento_api["name"]
+                evento_db.descricao = ""  # TODO: Check this
+                evento_db.local = evento_api["location"]["name"]
+                evento_db.endereco = f"{evento_api['location']['address']} - {evento_api['location']['city']}, {evento_api['location']['state']}"
+                evento_db.data_hora = evento_api["start_date"]
+                evento_db.data_fim = evento_api["end_date"]
+                evento_db.banner = evento_api["images"]["original"]
+                evento_db.onde_comprar_ingressos = evento_api["url"]
+                evento_db.organizador = evento_api['organizer']['name']
+                evento_db.gratis = evento_api['need_pay']
+                evento_db.categoria = evento_api['category']
+                evento_db.atualizado_em = datetime.now()
+                db.add(evento_db)
+            else:
+                # Cria um novo registro
+                new_evento = ModelEvento(
+                    nome=evento_api["name"],
+                    descricao="",  # TODO: Check this
+                    local=evento_api["location"]["name"],
+                    endereco=f"{evento_api['location']['address']} - {evento_api['location']['city']}, {evento_api['location']['state']}",
+                    data_hora=evento_api["start_date"],
+                    data_fim=evento_api["end_date"],
+                    banner=evento_api["images"]["original"],
+                    id_sistema_origem=evento_api["id"],
+                    fonte=controle_carga.fonte,
+                    organizador=evento_api['organizer']['name'],
+                    gratis=evento_api['need_pay'],
+                    categoria = evento_api['category'],
+                    atualizado_em=datetime.now()
+                )
+                db.add(new_evento)
+
+        controle_carga.status = "SUCESSO"
+        controle_carga.qtd_sucesso = len(eventos)
+        controle_carga.fim_exec = datetime.now()
+        db.add(controle_carga)
+        db.commit()
+
+    except Exception as e:
+        controle_carga.status = "ERRO"
+        controle_carga.fim_exec = datetime.now()
+        db.add(controle_carga)
+        db.commit()
+
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Erro ao obter eventos da API externa: {str(e)}")
+
+    return {"detail": "Eventos salvos com sucesso"}
+
 
 @evento_router.put('/{evento_id}', response_model=EventoResponse, status_code=status.HTTP_200_OK, summary='Atualizar um Evento')
 async def update_event(
@@ -76,7 +165,7 @@ async def deletar_evento(
     db.delete(evento)
     db.commit()
     
-    return None
+    return Response(content="", status_code=status.HTTP_204_NO_CONTENT)
 
 @evento_router.post("/selectedEvents", response_model=list[EventoResponse])
 async def listar_eventos_selecionados(

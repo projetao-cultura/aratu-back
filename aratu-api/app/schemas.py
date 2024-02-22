@@ -1,3 +1,4 @@
+from enum import Enum
 from fastapi.params import Query
 from pydantic import BaseModel, EmailStr, Field, HttpUrl, validator
 from typing import Optional, List
@@ -30,7 +31,14 @@ class Evento(BaseModel):
     categoria: List[str] = []
     avaliacao: Optional[float] = None
     local: str
+    endereco: str
     data_hora: datetime
+    data_fim: datetime
+    id_sistema_origem: Optional[int] = Field(None, description="ID do evento no sistema de origem")
+    fonte: str
+    organizador: str
+    gratis: bool
+    atualizado_em: datetime
     valor: Optional[float] = Field(0.0, description="Valor do ingresso para o evento, gratuito por padrão.")
     onde_comprar_ingressos: Optional[HttpUrl] = None
     usuarios_que_querem_ir: List[int] = Field(default_factory=list, description="Lista de IDs de usuários que querem ir ao evento")
@@ -99,3 +107,19 @@ class UsuarioUpdate(BaseModel):
     nome: Optional[str] = None
     email: Optional[EmailStr] = None
     ativo: Optional[bool] = None
+
+class ControleCargaStatus(str, Enum):
+    ERRO = 'ERRO'
+    EM_PROGRESSO = 'EM_PROGRESSO'
+    SUCESSO = 'SUCESSO'
+
+class ControleCarga(BaseModel):
+    id: Optional[int] = Field(None, description="ID do controle de carga, gerado automaticamente")
+    fonte: str
+    inic_exec: datetime
+    fim_exec: datetime
+    dt_inic: datetime
+    dt_fim: datetime
+    qtd_src_total: int
+    qtd_sucesso: int
+    status: ControleCargaStatus
