@@ -6,6 +6,7 @@ from app.core.auth import get_current_user, get_password_hash, create_access_tok
 from app.models.models import Usuario as ModelUsuario  
 from app.schemas import UserResponse, UsuarioCreate, UsuarioUpdate, Token
 from app.db.base import get_db
+import services.usuario_services as service
 
 usuario_router = APIRouter()
 
@@ -74,3 +75,17 @@ def login_for_access_token(
 
     return {'access_token': access_token, 'token_type': 'bearer'}
 
+@usuario_router.post("/{usuario_id}/amigos/{amigo_id}", status_code=status.HTTP_201_CREATED)
+async def adicionar_amigo(usuario_id: int, amigo_id: int, db: Session = Depends(get_db)):
+    service.adicionar_amigo(db, usuario_id, amigo_id)
+    return {"mensagem": "Amigo adicionado com sucesso"}
+
+@usuario_router.post("/{usuario_id}/quero_ir/{evento_id}", status_code=status.HTTP_201_CREATED)
+async def adicionar_evento_quero_ir(usuario_id: int, evento_id: int, db: Session = Depends(get_db)):
+    service.adicionar_evento_quero_ir(db, usuario_id, evento_id)
+    return {"mensagem": "Evento adicionado à lista de 'Quero Ir' com sucesso"}
+
+@usuario_router.post("/{usuario_id}/fui/{evento_id}", status_code=status.HTTP_201_CREATED)
+async def adicionar_evento_fui(usuario_id: int, evento_id: int, db: Session = Depends(get_db)):
+    service.adicionar_evento_fui(db, usuario_id, evento_id)
+    return {"mensagem": "Evento adicionado à lista de 'Fui' com sucesso"}
