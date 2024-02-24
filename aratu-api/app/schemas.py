@@ -4,25 +4,6 @@ from pydantic import BaseModel, EmailStr, Field, HttpUrl, validator
 from typing import Optional, List
 from datetime import datetime
 
-class Usuario(BaseModel):
-    id: Optional[int] = Field(None, description="ID do usuário, gerado automaticamente")
-    nome: str
-    email: EmailStr
-    senha: str
-    ativo: bool = True
-
-    @validator("senha")
-    def senha_nao_nula(cls, v: str) -> str:
-        if v is None:
-            raise ValueError("Senha não pode ser nula")
-        return v
-    
-    @validator("email")
-    def email_valido(cls, v: str) -> str:
-        if "@" not in v:
-            raise ValueError("E-mail inválido")
-        return v
-
 class Evento(BaseModel):
     id: Optional[int] = Field(None, description="ID do evento, gerado automaticamente")
     nome: str
@@ -48,6 +29,15 @@ class Evento(BaseModel):
     class Config:
         orm_mode = True
 
+# Schema de Evento simplificado pra ser retornado nas listas do usuário (quero ir/fui)
+class EventoMini(BaseModel):
+    id: int
+    nome: str
+    data_hora: datetime
+    local: str
+
+    class Config:
+        orm_mode = True
 
 class AvaliacaoEvento(BaseModel):
     evento_id: int
@@ -79,10 +69,50 @@ class EventoList(BaseModel):
     pages: int  
     eventos: list[EventoResponse]
 
+class UsuarioBase(BaseModel):
+    nome: str
+    email: EmailStr
+    biografia: Optional[str] = None
+    telefone: str
+    ativo: Optional[bool] = True
+    foto_perfil: Optional[HttpUrl] = None
+
+    @validator('telefone', pre=True, always=True)
+    def validar_telefone(cls, v):
+        # Implemente a lógica de validação do telefone aqui
+        return v
+    
+    @validator("email")
+    def email_valido(cls, v: str) -> str:
+        if "@" not in v:
+            raise ValueError("E-mail inválido")
+        return v
+
+class UsuarioCreate(UsuarioBase):
+    senha: str
+
+    @validator("senha")
+    def senha_nao_nula(cls, v: str) -> str:
+        if v is None:
+            raise ValueError("Senha não pode ser nula")
+        return v
+
+class Usuario(UsuarioBase):
+    id: Optional[int] = Field(None, description="ID do usuário, gerado automaticamente")
+    ativo: bool = True
+    amigos: List[int] = Field(default_factory=list, description="Lista de IDs de amigos do usuario")
+    eventos_quero_ir: List[int] = Field(default_factory=list, description="Lista de IDs de eventos que o usuario quer ir")
+    eventos_fui: List[int] = Field(default_factory=list, description="Lista de IDs de eventos que o usuario foi")
+
+    class Config:
+        orm_mode = True
+
 class UserResponse(BaseModel):
     id: int
     nome: str
     email: EmailStr
+    eventos_quero_ir: List[EventoMini] = []
+    eventos_fui: List[EventoMini] = []
 
     class Config:
         orm_mode = True
@@ -107,6 +137,9 @@ class UsuarioUpdate(BaseModel):
     nome: Optional[str] = None
     email: Optional[EmailStr] = None
     ativo: Optional[bool] = None
+    biografia: Optional[str] = None
+    telefone: Optional[str] = None
+    foto_perfil: Optional[HttpUrl] = None
 
 class ControleCargaStatus(str, Enum):
     ERRO = 'ERRO'
