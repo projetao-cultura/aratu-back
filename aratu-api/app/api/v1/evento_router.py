@@ -5,8 +5,8 @@ from fastapi.responses import Response
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 
-from app.models.models import Evento as ModelEvento, ControleCarga
-from app.schemas import Evento, EventoList, EventoResponse
+from app.models.models import Evento as ModelEvento, ControleCarga, Categoria
+from app.schemas import Evento, EventoList, EventoResponse, CategoriaCreate, CategoriaSchema
 from app.db.base import get_db
 from app.services.crowler_sympla import get_eventos_sympla, count_eventos_sympla
 
@@ -166,6 +166,18 @@ async def deletar_evento(
     db.commit()
     
     return Response(content="", status_code=status.HTTP_204_NO_CONTENT)
+
+@evento_router.post("/categorias/", response_model=CategoriaSchema, status_code=status.HTTP_201_CREATED)
+def criar_categoria(categoria: CategoriaCreate, db: Session = Depends(get_db)):
+    # Verifica se a categoria já existe
+    db_categoria = db.query(Categoria).filter(Categoria.id == categoria.id).first()
+    if db_categoria:
+        raise HTTPException(status_code=400, detail="ID da categoria já está em uso")
+    nova_categoria = Categoria(id=categoria.id, nome=categoria.nome)
+    db.add(nova_categoria)
+    db.commit()
+    db.refresh(nova_categoria)
+    return nova_categoria
 
 @evento_router.post("/selectedEvents", response_model=list[EventoResponse])
 async def listar_eventos_selecionados(
