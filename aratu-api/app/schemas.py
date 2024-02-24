@@ -90,6 +90,7 @@ class UsuarioBase(BaseModel):
 
 class UsuarioCreate(UsuarioBase):
     senha: str
+    categorias_interesse: List[int] = []
 
     @validator("senha")
     def senha_nao_nula(cls, v: str) -> str:
@@ -140,6 +141,22 @@ class UsuarioUpdate(BaseModel):
     biografia: Optional[str] = None
     telefone: Optional[str] = None
     foto_perfil: Optional[HttpUrl] = None
+    categorias_interesse: Optional[List[int]] = None
+
+class CategoriaCreate(BaseModel):
+    id: int = Field(..., description="ID único para a categoria, definido manualmente")
+    nome: str = Field(..., description="Nome da categoria")
+
+    class Config:
+        orm_mode = True
+
+class CategoriaSchema(BaseModel):
+    id: int
+    nome: str
+
+    class Config:
+        orm_mode = True
+
 
 class ControleCargaStatus(str, Enum):
     ERRO = 'ERRO'
