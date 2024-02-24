@@ -19,7 +19,13 @@ async def criar_usuario(usuario: UsuarioCreate, db: Session = Depends(get_db)):
     hashed_password = get_password_hash(usuario.senha)
     
     # Cria um novo usuário
-    novo_usuario = ModelUsuario(nome=usuario.nome, email=usuario.email, senha=hashed_password, ativo=usuario.ativo)
+    novo_usuario = ModelUsuario(
+        nome=usuario.nome,
+        email=usuario.email,
+        senha=hashed_password,
+        ativo=usuario.ativo,
+        categorias_interesse=list(map(str, usuario.categorias_interesse)) 
+    )
 
     db.add(novo_usuario)
     db.commit()
@@ -46,8 +52,13 @@ def update_user(
     if current_user.id != user_id:
         raise HTTPException(status_code=400, detail='Not enough permissions')
 
-    current_user.email = user.email
-    current_user.senha = get_password_hash(user.senha)
+    if user.email is not None:
+        current_user.email = user.email
+    if user.senha is not None:
+        current_user.senha = get_password_hash(user.senha)
+    if user.categorias_interesse is not None:
+        current_user.categorias_interesse = list(map(str, user.categorias_interesse))
+        
     session.commit()
     session.refresh(current_user)
 
