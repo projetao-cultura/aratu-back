@@ -10,7 +10,7 @@ amigos_association = Table('amigos', Base.metadata,
     Column('amigo_id', Integer, ForeignKey('usuarios.id'), primary_key=True)
 )
 
-# Tabela de associação para a relação many-to-many de eventos e usuarios (quero ir/fui)
+# Tabelas de associação para a relação many-to-many de eventos e usuarios (quero ir/fui)
 usuarios_eventos_querem_ir = Table('usuarios_eventos_querem_ir', Base.metadata,
     Column('usuario_id', ForeignKey('usuarios.id'), primary_key=True),
     Column('evento_id', ForeignKey('eventos.id'), primary_key=True)
@@ -19,6 +19,17 @@ usuarios_eventos_querem_ir = Table('usuarios_eventos_querem_ir', Base.metadata,
 usuarios_eventos_foram = Table('usuarios_eventos_foram', Base.metadata,
     Column('usuario_id', ForeignKey('usuarios.id'), primary_key=True),
     Column('evento_id', ForeignKey('eventos.id'), primary_key=True)
+)
+
+# Tabelas de associação para a relação many-to-many de eventos e categorias
+eventos_categorias = Table('eventos_categorias', Base.metadata,
+    Column('evento_id', ForeignKey('eventos.id'), primary_key=True),
+    Column('categoria_id', ForeignKey('categorias.id'), primary_key=True)
+)
+
+usuarios_categorias = Table('usuarios_categorias', Base.metadata,
+    Column('usuario_id', ForeignKey('usuarios.id'), primary_key=True),
+    Column('categoria_id', ForeignKey('categorias.id'), primary_key=True)
 )
 
 class Usuario(Base):
@@ -31,6 +42,7 @@ class Usuario(Base):
     ativo = Column(Boolean, default=True)
     biografia = Column(Text)
     telefone = Column(String, unique=True)
+    categorias_interesse = Column(ARRAY(String))
     foto_perfil = Column(String)
     
     amigos = relationship("Usuario",
@@ -41,7 +53,8 @@ class Usuario(Base):
     
     eventos_quero_ir = relationship("Evento", secondary="usuarios_eventos_querem_ir", back_populates="usuarios_que_querem_ir")
     eventos_fui = relationship("Evento", secondary="usuarios_eventos_foram", back_populates="usuarios_que_foram")
-    
+    categorias_interesse = relationship("Categoria", secondary=usuarios_categorias)
+
     def __repr__(self):
         return f"<Usuario(nome='{self.nome}', email='{self.email}', ativo={self.ativo})>"
 
@@ -68,6 +81,7 @@ class Evento(Base):
     usuarios_que_querem_ir = relationship("Usuario", secondary=usuarios_eventos_querem_ir, back_populates="eventos_quero_ir")
     usuarios_que_foram = relationship("Usuario", secondary=usuarios_eventos_foram, back_populates="eventos_fui")
     avaliacoes = relationship("Avaliacao", back_populates="evento")
+    categorias = relationship("Categoria", secondary=eventos_categorias)
 
     def __repr__(self):
         return f"<Evento(nome='{self.nome}', descricao='{self.descricao}', local='{self.local}', data_hora='{self.data_hora}', data_fim='{self.data_fim}', valor={self.valor}, onde_comprar_ingressos='{self.onde_comprar_ingressos}', id_sistema_origem={self.id_sistema_origem}, fonte='{self.fonte}', organizador='{self.organizador}', gratis={self.gratis})>"
@@ -85,6 +99,11 @@ class Avaliacao(Base):
     
     def __repr__(self):
         return f"<Avaliacao(evento_id={self.evento_id}, usuario_id={self.usuario_id}, avaliacao={self.avaliacao})>"
+    
+class Categoria(Base):
+    __tablename__ = "categorias"
+    id = Column(Integer, primary_key=True)
+    nome = Column(String, unique=True)
     
 class ControleCarga(Base):
     __tablename__ = "controle_carga"
