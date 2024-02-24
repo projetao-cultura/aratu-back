@@ -1,8 +1,25 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Float, Enum, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Float, Enum, ForeignKey, Text, Table
 from sqlalchemy.dialects.postgresql import ARRAY 
 from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
+
+# Tabela de associação para a relação many-to-many de amigos
+amigos_association = Table('amigos', Base.metadata,
+    Column('usuario_id', Integer, ForeignKey('usuarios.id'), primary_key=True),
+    Column('amigo_id', Integer, ForeignKey('usuarios.id'), primary_key=True)
+)
+
+# Tabela de associação para a relação many-to-many de eventos e usuarios (quero ir/fui)
+usuarios_eventos_querem_ir = Table('usuarios_eventos_querem_ir', Base.metadata,
+    Column('usuario_id', ForeignKey('usuarios.id'), primary_key=True),
+    Column('evento_id', ForeignKey('eventos.id'), primary_key=True)
+)
+
+usuarios_eventos_foram = Table('usuarios_eventos_foram', Base.metadata,
+    Column('usuario_id', ForeignKey('usuarios.id'), primary_key=True),
+    Column('evento_id', ForeignKey('eventos.id'), primary_key=True)
+)
 
 class Usuario(Base):
     __tablename__ = "usuarios"
@@ -12,7 +29,19 @@ class Usuario(Base):
     email = Column(String, unique=True)
     senha = Column(String)
     ativo = Column(Boolean, default=True)
-
+    biografia = Column(Text)
+    telefone = Column(String, unique=True)
+    foto_perfil = Column(String)
+    
+    amigos = relationship("Usuario",
+                          secondary=amigos_association,
+                          primaryjoin=id==amigos_association.c.usuario_id,
+                          secondaryjoin=id==amigos_association.c.amigo_id,
+                          backref="usuarios")
+    
+    eventos_quero_ir = relationship("Evento", secondary="usuarios_eventos_querem_ir", back_populates="usuarios_que_querem_ir")
+    eventos_fui = relationship("Evento", secondary="usuarios_eventos_foram", back_populates="usuarios_que_foram")
+    
     def __repr__(self):
         return f"<Usuario(nome='{self.nome}', email='{self.email}', ativo={self.ativo})>"
 
@@ -36,6 +65,8 @@ class Evento(Base):
     gratis = Column(Boolean)
     atualizado_em = Column(DateTime)
     
+    usuarios_que_querem_ir = relationship("Usuario", secondary=usuarios_eventos_querem_ir, back_populates="eventos_quero_ir")
+    usuarios_que_foram = relationship("Usuario", secondary=usuarios_eventos_foram, back_populates="eventos_fui")
     avaliacoes = relationship("Avaliacao", back_populates="evento")
 
     def __repr__(self):
