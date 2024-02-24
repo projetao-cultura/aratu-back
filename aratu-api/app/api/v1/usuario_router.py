@@ -4,13 +4,13 @@ from sqlalchemy.orm import Session
 
 from app.core.auth import get_current_user, get_password_hash, create_access_token, verify_password
 from app.models.models import Usuario as ModelUsuario  
-from app.schemas import Usuario, UserResponse, Token
+from app.schemas import UserResponse, UsuarioCreate, UsuarioUpdate, Token
 from app.db.base import get_db
 
 usuario_router = APIRouter()
 
 @usuario_router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-async def criar_usuario(usuario: Usuario, db: Session = Depends(get_db)):
+async def criar_usuario(usuario: UsuarioCreate, db: Session = Depends(get_db)):
     # Verifica se o e-mail já está cadastrado
     db_usuario = db.query(ModelUsuario).filter(ModelUsuario.email == usuario.email).first()
     if db_usuario:
@@ -39,7 +39,7 @@ async def buscar_usuario(usuario_id: int, db: Session = Depends(get_db)):
 @usuario_router.put('/{usuario_id}', response_model=UserResponse, summary='Atualizar um Usuário')
 def update_user(
     user_id: int,
-    user: Usuario,
+    user: UsuarioUpdate,
     session: Session = Depends(get_db),
     current_user: ModelUsuario = Depends(get_current_user),
 ):
