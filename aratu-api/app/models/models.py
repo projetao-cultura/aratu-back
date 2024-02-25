@@ -30,6 +30,7 @@ class Usuario(Base):
     senha = Column(String)
     ativo = Column(Boolean, default=True)
     biografia = Column(Text)
+    categorias_interesse = Column(ARRAY(String))
     telefone = Column(String, unique=True)
     foto_perfil = Column(String)
     
