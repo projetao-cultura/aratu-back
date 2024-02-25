@@ -3,7 +3,7 @@ from math import ceil
 from fastapi import APIRouter, HTTPException, Depends, status, Query
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 
 from app.models.models import Evento as ModelEvento, ControleCarga
 from app.schemas import Evento, EventoList, EventoResponse
@@ -174,6 +174,51 @@ async def listar_eventos_selecionados(
 ):
     # Busca os eventos por uma lista de ID's
     eventos = db.query(ModelEvento).filter(ModelEvento.id.in_(eventos_ids)).all()
+    
+    # Use from_orm para criar uma lista de EventoResponse a partir dos eventos
+    eventos_response = [EventoResponse.from_orm(evento) for evento in eventos]
+    
+    return eventos_response
+
+@evento_router.get("/categories/{categoria}", response_model=list[EventoResponse])
+async def listar_eventos_por_categoria(
+    categoria: str,
+    db: Session = Depends(get_db)
+):
+    # Busca os eventos por categoria
+    eventos = db.query(ModelEvento).filter(ModelEvento.categoria.contains([categoria])).all()
+    
+    # Use from_orm para criar uma lista de EventoResponse a partir dos eventos
+    eventos_response = [EventoResponse.from_orm(evento) for evento in eventos]
+    
+    return eventos_response
+
+@evento_router.post("/selectedCategories/{logicaBusca}", response_model=list[EventoResponse], description = "Se logicaBusca for TRUE, buscara com lógica AND, se FALSE, com lógica OR")
+async def listar_eventos_por_categorias(
+    categorias: List[str],
+    logicaBusca: bool = True,
+    db: Session = Depends(get_db)
+):
+    if logicaBusca:
+        # Busca os eventos por categoria, CATEGORIA É UM ARRAY
+        eventos = db.query(ModelEvento).filter(ModelEvento.categoria.contains(categorias)).all()
+    else:
+        # Busca os eventos por categoria, CATEGORIA É UM ARRAY
+        eventos = db.query(ModelEvento).filter(or_(*[ModelEvento.categoria.contains([categoria]) for categoria in categorias])).all()
+    
+    # Use from_orm para criar uma lista de EventoResponse a partir dos eventos
+    eventos_response = [EventoResponse.from_orm(evento) for evento in eventos]
+    
+    return eventos_response
+
+# criar endpoint para listar eventos por uma parte do nome
+@evento_router.get("/search/{nome}", response_model=list[EventoResponse])
+async def listar_eventos_por_nome(
+    nome: str,
+    db: Session = Depends(get_db)
+):
+    # Busca os eventos por nome
+    eventos = db.query(ModelEvento).filter(ModelEvento.nome.ilike(f"%{nome}%")).all()
     
     # Use from_orm para criar uma lista de EventoResponse a partir dos eventos
     eventos_response = [EventoResponse.from_orm(evento) for evento in eventos]
