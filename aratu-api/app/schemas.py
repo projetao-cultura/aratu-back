@@ -75,7 +75,7 @@ class UsuarioBase(BaseModel):
     biografia: Optional[str] = None
     telefone: str
     ativo: Optional[bool] = True
-    foto_perfil: Optional[HttpUrl] = None
+    foto_perfil: Optional[HttpUrl] = "https://i.imgur.com/JUf7jx3.jpeg"
 
     @validator('telefone', pre=True, always=True)
     def validar_telefone(cls, v):
@@ -90,6 +90,7 @@ class UsuarioBase(BaseModel):
 
 class UsuarioCreate(UsuarioBase):
     senha: str
+    categorias_interesse: Optional[List[str]] = []
 
     @validator("senha")
     def senha_nao_nula(cls, v: str) -> str:
@@ -103,6 +104,7 @@ class Usuario(UsuarioBase):
     amigos: List[int] = Field(default_factory=list, description="Lista de IDs de amigos do usuario")
     eventos_quero_ir: List[int] = Field(default_factory=list, description="Lista de IDs de eventos que o usuario quer ir")
     eventos_fui: List[int] = Field(default_factory=list, description="Lista de IDs de eventos que o usuario foi")
+    categorias_interesse: Optional[List[str]] = []
 
     class Config:
         orm_mode = True
@@ -111,8 +113,10 @@ class UserResponse(BaseModel):
     id: int
     nome: str
     email: EmailStr
+    amigos: List[int] = Field(default_factory=list, description="Lista de IDs de amigos do usuario")
     eventos_quero_ir: List[EventoMini] = []
     eventos_fui: List[EventoMini] = []
+    categorias_interesse: Optional[List[str]] = []
 
     class Config:
         orm_mode = True

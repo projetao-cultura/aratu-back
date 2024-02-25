@@ -1,10 +1,12 @@
 from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from typing import List
 
 from app.core.auth import get_current_user, get_password_hash, create_access_token, verify_password
-from app.models.models import Usuario as ModelUsuario  
-from app.schemas import UserResponse, UsuarioCreate, UsuarioUpdate, Token
+from app.models.models import Usuario as ModelUsuario
+from app.schemas import UserResponse, UsuarioCreate, UsuarioUpdate, Token, EventoResponse
+from app.services.usuario_services import get_eventos_interesse
 from app.db.base import get_db
 
 usuario_router = APIRouter()
@@ -19,7 +21,13 @@ async def criar_usuario(usuario: UsuarioCreate, db: Session = Depends(get_db)):
     hashed_password = get_password_hash(usuario.senha)
     
     # Cria um novo usuário
-    novo_usuario = ModelUsuario(nome=usuario.nome, email=usuario.email, senha=hashed_password, ativo=usuario.ativo)
+    novo_usuario = ModelUsuario(
+        nome=usuario.nome, 
+        email=usuario.email, 
+        senha=hashed_password, 
+        ativo=usuario.ativo,
+        categorias_interesse=usuario.categorias_interesse
+    )
 
     db.add(novo_usuario)
     db.commit()
@@ -74,3 +82,11 @@ def login_for_access_token(
 
     return {'access_token': access_token, 'token_type': 'bearer'}
 
+@usuario_router.get("/eventos-de-interesse/{usuario_id}", response_model=List[EventoResponse], summary="Eventos de Interesse do Usuário")
+async def eventos_de_interesse_do_usuario(usuario_id: int, db: Session = Depends(get_db)):
+    try:
+        eventos_de_interesse = await get_eventos_interesse(db, usuario_id)
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    
+    return eventos_de_interesse
