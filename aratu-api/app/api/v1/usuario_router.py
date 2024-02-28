@@ -5,9 +5,9 @@ from typing import List
 
 from app.core.auth import get_current_user, get_password_hash, create_access_token, verify_password
 from app.models.models import Usuario as ModelUsuario
-from app.schemas import UserResponse, UsuarioCreate, UsuarioUpdate, Token, EventoResponse
-from app.services.usuario_services import get_eventos_interesse
+from app.schemas import UserResponse, UserResponseExpand, UsuarioCreate, UsuarioUpdate, UsuarioMini, Token, EventoResponse, EventoMini
 from app.db.base import get_db
+from app.services import usuario_services as service
 
 usuario_router = APIRouter()
 
@@ -35,7 +35,6 @@ async def criar_usuario(usuario: UsuarioCreate, db: Session = Depends(get_db)):
 
     return UserResponse.from_orm(novo_usuario)
 
-
 @usuario_router.get("/{usuario_id}", response_model=UserResponse, summary='Listar um usuário')
 async def buscar_usuario(usuario_id: int, db: Session = Depends(get_db)):
     # Busca o usuário por ID
@@ -43,6 +42,37 @@ async def buscar_usuario(usuario_id: int, db: Session = Depends(get_db)):
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
     return UserResponse.from_orm(usuario)
+
+@usuario_router.get("/{usuario_id}/expand", response_model=UserResponseExpand, summary="Buscar um Usuário expandindo Amigos e Eventos (Fui/Quero ir)")
+async def buscar_usuario(usuario_id: int, db: Session = Depends(get_db)):
+    usuario = db.query(ModelUsuario).filter(ModelUsuario.id == usuario_id).first()
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    
+    amigos = [UsuarioMini(id=amigo.id) for amigo in usuario.amigos]
+    eventos_quero_ir = [
+        EventoMini(id=evento.id, nome=evento.nome, data_hora=evento.data_hora, local=evento.local)  # Ajuste conforme os campos reais de seu modelo Evento
+        for evento in usuario.eventos_quero_ir
+    ]
+    eventos_fui = [
+        EventoMini(id=evento.id, nome=evento.nome, data_hora=evento.data_hora, local=evento.local)  # Ajuste conforme os campos reais de seu modelo Evento
+        for evento in usuario.eventos_fui
+    ]
+    # Construindo manualmente a resposta para garantir que a lista de amigos contenha apenas IDs
+    user_response = UserResponseExpand(
+        id=usuario.id,
+        nome=usuario.nome,
+        email=usuario.email,
+        biografia=usuario.biografia,
+        telefone=usuario.telefone,
+        foto_perfil=usuario.foto_perfil,
+        amigos=amigos, 
+        eventos_quero_ir=eventos_quero_ir,
+        eventos_fui=eventos_fui,
+        categorias_interesse=usuario.categorias_interesse
+    )
+    
+    return user_response
 
 @usuario_router.put('/{usuario_id}', response_model=UserResponse, summary='Atualizar um Usuário')
 def update_user(
@@ -95,8 +125,23 @@ def login_for_access_token(
 @usuario_router.get("/eventos-de-interesse/{usuario_id}", response_model=List[EventoResponse], summary="Eventos de Interesse do Usuário")
 async def eventos_de_interesse_do_usuario(usuario_id: int, db: Session = Depends(get_db)):
     try:
-        eventos_de_interesse = await get_eventos_interesse(db, usuario_id)
+        eventos_de_interesse = await service.get_eventos_interesse(db, usuario_id)
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))
     
     return eventos_de_interesse
+
+@usuario_router.post("/{usuario_id}/amigos/{amigo_id}", status_code=status.HTTP_201_CREATED)
+async def adicionar_amigo(usuario_id: int, amigo_id: int, db: Session = Depends(get_db)):
+    service.adicionar_amigo(db, usuario_id, amigo_id)
+    return {"mensagem": "Amigo adicionado com sucesso"}
+
+@usuario_router.post("/{usuario_id}/quero_ir/{evento_id}", status_code=status.HTTP_201_CREATED)
+async def adicionar_evento_quero_ir(usuario_id: int, evento_id: int, db: Session = Depends(get_db)):
+    service.adicionar_evento_quero_ir(db, usuario_id, evento_id)
+    return {"mensagem": "Evento adicionado à lista de 'Quero Ir' com sucesso"}
+
+@usuario_router.post("/{usuario_id}/fui/{evento_id}", status_code=status.HTTP_201_CREATED)
+async def adicionar_evento_fui(usuario_id: int, evento_id: int, db: Session = Depends(get_db)):
+    service.adicionar_evento_fui(db, usuario_id, evento_id)
+    return {"mensagem": "Evento adicionado à lista de 'Fui' com sucesso"}

@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
 
 from app.models.models import Evento as ModelEvento, ControleCarga
-from app.schemas import Evento, EventoList, EventoResponse
+from app.schemas import Evento, EventoList, EventoResponse, EventoResponseExpand, UsuarioMini
 from app.db.base import get_db
 from app.services.crowler_sympla import get_eventos_sympla, count_eventos_sympla
 
@@ -47,6 +47,39 @@ async def listar_evento_por_id(evento_id: int, db: Session = Depends(get_db)):
     if not evento:
         raise HTTPException(status_code=404, detail="Evento não encontrado")
     return EventoResponse.from_orm(evento)
+
+@evento_router.get("/{evento_id}/expand", response_model=EventoResponseExpand, status_code=status.HTTP_200_OK, summary='Buscar um Evento expandindo usuarios (Fui/Quero ir) e avaliacoes')
+async def listar_evento_por_id(evento_id: int, db: Session = Depends(get_db)):
+    evento = db.query(ModelEvento).filter(ModelEvento.id == evento_id).first()
+    if not evento:
+        raise HTTPException(status_code=404, detail="Evento não encontrado")
+    
+    quero_ir = [UsuarioMini(id=user.id) for user in evento.usuarios_que_querem_ir]
+    fui = [UsuarioMini(id=user.id) for user in evento.usuarios_que_foram]
+    #avaliaram = [user.id for user in evento.avaliacoes]
+
+    evento_response = EventoResponseExpand(
+        id=evento.id,
+        nome=evento.nome,
+        descricao=evento.descricao,
+        banner=evento.banner,
+        categoria=evento.categoria,
+        local=evento.local,
+        endereco=evento.endereco,
+        data_hora=evento.data_hora,
+        data_fim=evento.data_fim,
+        id_sistema_origem=evento.id_sistema_origem,
+        fonte=evento.fonte,
+        organizador=evento.organizador,
+        gratis=evento.gratis,
+        atualizado_em=evento.atualizado_em,
+        valor=evento.valor,
+        onde_comprar_ingressos=evento.onde_comprar_ingressos,
+        usuarios_que_querem_ir=quero_ir,
+        usuarios_que_foram=fui,
+        #avaliacoes=evento.avaliacoes
+    )
+    return evento_response
 
 @evento_router.put('/{evento_id}', response_model=EventoResponse, status_code=status.HTTP_200_OK, summary='Atualizar um Evento')
 async def update_event(
