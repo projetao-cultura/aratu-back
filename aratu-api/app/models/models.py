@@ -39,12 +39,12 @@ class Usuario(Base):
                           primaryjoin=id==amigos_association.c.usuario_id,
                           secondaryjoin=id==amigos_association.c.amigo_id,
                           backref="usuarios")
-    
+
     eventos_quero_ir = relationship("Evento", secondary="usuarios_eventos_querem_ir", back_populates="usuarios_que_querem_ir")
     eventos_fui = relationship("Evento", secondary="usuarios_eventos_foram", back_populates="usuarios_que_foram")
     
     def __repr__(self):
-        return f"<Usuario(nome='{self.nome}', email='{self.email}', ativo={self.ativo})>"
+        return f"<Usuario(id='{self.id}, 'nome='{self.nome}', email='{self.email}', ativo={self.ativo})>"
 
 class Evento(Base):
     __tablename__ = "eventos"
