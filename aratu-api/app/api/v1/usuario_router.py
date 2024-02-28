@@ -5,7 +5,7 @@ from typing import List
 
 from app.core.auth import get_current_user, get_password_hash, create_access_token, verify_password
 from app.models.models import Usuario as ModelUsuario
-from app.schemas import UserResponse, UserResponseExpand, UsuarioCreate, UsuarioUpdate, UsuarioAmigo, Token, EventoResponse, EventoMini
+from app.schemas import UserResponse, UserResponseExpand, UsuarioCreate, UsuarioUpdate, UsuarioMini, Token, EventoResponse, EventoMini
 from app.db.base import get_db
 from app.services import usuario_services as service
 
@@ -49,7 +49,7 @@ async def buscar_usuario(usuario_id: int, db: Session = Depends(get_db)):
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
     
-    amigos = [UsuarioAmigo(id=amigo.id) for amigo in usuario.amigos]
+    amigos = [UsuarioMini(id=amigo.id) for amigo in usuario.amigos]
     eventos_quero_ir = [
         EventoMini(id=evento.id, nome=evento.nome, data_hora=evento.data_hora, local=evento.local)  # Ajuste conforme os campos reais de seu modelo Evento
         for evento in usuario.eventos_quero_ir
