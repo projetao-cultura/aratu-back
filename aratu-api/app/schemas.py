@@ -22,9 +22,6 @@ class Evento(BaseModel):
     atualizado_em: datetime
     valor: Optional[float] = Field(0.0, description="Valor do ingresso para o evento, gratuito por padrão.")
     onde_comprar_ingressos: Optional[HttpUrl] = None
-    usuarios_que_querem_ir: List[int] = Field(default_factory=list, description="Lista de IDs de usuários que querem ir ao evento")
-    usuarios_que_foram: List[int] = Field(default_factory=list, description="Lista de IDs de usuários que foram ao evento")
-    usuarios_que_avaliaram: List[int] = Field(default_factory=list, description="Lista de IDs de usuários que avaliaram o evento")
 
     class Config:
         orm_mode = True
@@ -61,7 +58,7 @@ class AvaliacaoEvento(BaseModel):
         if v < 1 or v > 5:
             raise ValueError("A avaliação deve ser entre 1 e 5")
         return v
-
+    
 class EventoResponse(Evento):
     pass
 
@@ -98,14 +95,14 @@ class UsuarioCreate(UsuarioBase):
             raise ValueError("Senha não pode ser nula")
         return v
     
-class UsuarioAmigo(BaseModel):
+class UsuarioMini(BaseModel):
     id: int
 
 class Usuario(UsuarioBase):
     id: Optional[int] = Field(None, description="ID do usuário, gerado automaticamente")
     ativo: bool = True
     categorias_interesse: Optional[List[str]] = []
-    amigos: List[UsuarioAmigo] = Field(default_factory=list, description="Lista de amigos do usuario")
+    amigos: List[UsuarioMini] = Field(default_factory=list, description="Lista de amigos do usuario")
     eventos_quero_ir: List[EventoMini] = Field(default_factory=list, description="Lista de eventos que o usuario quer ir")
     eventos_fui: List[EventoMini] = Field(default_factory=list, description="Lista de eventos que o usuario foi")
 
@@ -122,9 +119,14 @@ class UserResponse(BaseModel):
         orm_mode = True
 
 class UserResponseExpand(UserResponse):
-    amigos: List[UsuarioAmigo] = Field(default_factory=list, description="Lista de amigos do usuario")
+    amigos: List[UsuarioMini] = Field(default_factory=list, description="Lista de amigos do usuario")
     eventos_quero_ir: List[EventoMini] = Field(default_factory=list, description="Lista de eventos que o usuario quer ir")
     eventos_fui: List[EventoMini] = Field(default_factory=list, description="Lista de eventos que o usuario foi")
+
+class EventoResponseExpand(EventoResponse):
+    usuarios_que_querem_ir: List[UsuarioMini] = Field(default_factory=list, description="Lista de usuários que querem ir ao evento")
+    usuarios_que_foram: List[UsuarioMini] = Field(default_factory=list, description="Lista de usuários que foram ao evento")
+    #usuarios_que_avaliaram: List[UsuarioMini] = Field(default_factory=list, description="Lista de usuários que avaliaram o evento")
 
 class Token(BaseModel):
     access_token: str
