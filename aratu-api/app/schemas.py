@@ -97,14 +97,17 @@ class UsuarioCreate(UsuarioBase):
         if v is None:
             raise ValueError("Senha não pode ser nula")
         return v
+    
+class UsuarioAmigo(BaseModel):
+    id: int
 
 class Usuario(UsuarioBase):
     id: Optional[int] = Field(None, description="ID do usuário, gerado automaticamente")
     ativo: bool = True
-    amigos: List[int] = Field(default_factory=list, description="Lista de IDs de amigos do usuario")
-    eventos_quero_ir: List[int] = Field(default_factory=list, description="Lista de IDs de eventos que o usuario quer ir")
-    eventos_fui: List[int] = Field(default_factory=list, description="Lista de IDs de eventos que o usuario foi")
     categorias_interesse: Optional[List[str]] = []
+    amigos: List[UsuarioAmigo] = Field(default_factory=list, description="Lista de amigos do usuario")
+    eventos_quero_ir: List[EventoMini] = Field(default_factory=list, description="Lista de eventos que o usuario quer ir")
+    eventos_fui: List[EventoMini] = Field(default_factory=list, description="Lista de eventos que o usuario foi")
 
     class Config:
         orm_mode = True
@@ -113,13 +116,15 @@ class UserResponse(BaseModel):
     id: int
     nome: str
     email: EmailStr
-    amigos: List[int] = Field(default_factory=list, description="Lista de IDs de amigos do usuario")
-    eventos_quero_ir: List[EventoMini] = []
-    eventos_fui: List[EventoMini] = []
     categorias_interesse: Optional[List[str]] = []
 
     class Config:
         orm_mode = True
+
+class UserResponseExpand(UserResponse):
+    amigos: List[UsuarioAmigo] = Field(default_factory=list, description="Lista de amigos do usuario")
+    eventos_quero_ir: List[EventoMini] = Field(default_factory=list, description="Lista de eventos que o usuario quer ir")
+    eventos_fui: List[EventoMini] = Field(default_factory=list, description="Lista de eventos que o usuario foi")
 
 class Token(BaseModel):
     access_token: str
