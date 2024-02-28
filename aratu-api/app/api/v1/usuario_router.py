@@ -11,7 +11,7 @@ from app.services import usuario_services as service
 
 usuario_router = APIRouter()
 
-@usuario_router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+@usuario_router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED, summary='Criar um usuário')
 async def criar_usuario(usuario: UsuarioCreate, db: Session = Depends(get_db)):
     # Verifica se o e-mail já está cadastrado
     db_usuario = db.query(ModelUsuario).filter(ModelUsuario.email == usuario.email).first()
@@ -35,7 +35,7 @@ async def criar_usuario(usuario: UsuarioCreate, db: Session = Depends(get_db)):
 
     return UserResponse.from_orm(novo_usuario)
 
-@usuario_router.get("/{usuario_id}", response_model=UserResponse)
+@usuario_router.get("/{usuario_id}", response_model=UserResponse, summary='Listar um usuário')
 async def buscar_usuario(usuario_id: int, db: Session = Depends(get_db)):
     # Busca o usuário por ID
     usuario = db.query(ModelUsuario).filter(ModelUsuario.id == usuario_id).first()
@@ -90,6 +90,16 @@ def update_user(
     session.refresh(current_user)
 
     return current_user
+
+@usuario_router.get('/buscar/{nome}', response_model=list[UserResponse], summary='Buscar um Usuário por parte do nome')
+def buscar_usuario_por_nome(nome: str, db: Session = Depends(get_db)):
+    usuarios = db.query(ModelUsuario).filter(ModelUsuario.nome.ilike(f'%{nome}%')).all()
+    return [UserResponse.from_orm(usuario) for usuario in usuarios]
+
+@usuario_router.post('/selectedUsers', response_model=list[UserResponse], summary='Listar Usuários por uma lista de ids de usuário')
+def listar_usuarios(ids: list[int], db: Session = Depends(get_db)):
+    usuarios = db.query(ModelUsuario).filter(ModelUsuario.id.in_(ids)).all()
+    return [UserResponse.from_orm(usuario) for usuario in usuarios]
 
 @usuario_router.post('/token', response_model=Token, summary='Gerar um Token de Acesso')
 def login_for_access_token(
