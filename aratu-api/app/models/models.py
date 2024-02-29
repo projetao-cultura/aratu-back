@@ -42,6 +42,7 @@ class Usuario(Base):
 
     eventos_quero_ir = relationship("Evento", secondary="usuarios_eventos_querem_ir", back_populates="usuarios_que_querem_ir")
     eventos_fui = relationship("Evento", secondary="usuarios_eventos_foram", back_populates="usuarios_que_foram")
+    avaliacoes = relationship("Avaliacao", back_populates="usuario")
     
     def __repr__(self):
         return f"<Usuario(id='{self.id}, 'nome='{self.nome}', email='{self.email}', ativo={self.ativo})>"
@@ -80,9 +81,8 @@ class Avaliacao(Base):
     evento_id = Column(Integer, ForeignKey('eventos.id'), nullable=False)
     usuario_id = Column(Integer, ForeignKey('usuarios.id'), nullable=False)
     avaliacao = Column(Integer)
-    
+    usuario = relationship("Usuario", back_populates="avaliacoes")
     evento = relationship("Evento", back_populates="avaliacoes")
-    # Adicionaar a relação no modelo Usuario também, se necessário
     
     def __repr__(self):
         return f"<Avaliacao(evento_id={self.evento_id}, usuario_id={self.usuario_id}, avaliacao={self.avaliacao})>"
