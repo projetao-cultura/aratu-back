@@ -1,10 +1,13 @@
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, Query, status, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from typing import List
 
 from app.core.auth import get_current_user, get_password_hash, create_access_token, verify_password
 from app.models.models import Usuario as ModelUsuario
+from app.models.models import Evento as ModelEvento
+from app.models.models import Avaliacao as ModelAvaliacao
+from app.schemas import AvaliacaoEvento
 from app.schemas import UserResponse, UserResponseExpand, UsuarioCreate, UsuarioUpdate, UsuarioMini, Token, EventoResponse, EventoMini
 from app.db.base import get_db
 from app.services import usuario_services as service
@@ -123,7 +126,9 @@ def login_for_access_token(
             status_code=400, detail='Incorrect email or password'
         )
 
-    access_token = create_access_token(data={'sub': usuario.email})
+    access_token = create_access_token(
+        data={'sub': usuario.email, 'id': usuario.id}
+    )
 
     return {'access_token': access_token, 'token_type': 'bearer'}
 
@@ -158,3 +163,40 @@ async def adicionar_evento_quero_ir(usuario_id: int, evento_id: int, db: Session
 async def adicionar_evento_fui(usuario_id: int, evento_id: int, db: Session = Depends(get_db)):
     service.adicionar_evento_fui(db, usuario_id, evento_id)
     return {"mensagem": "Evento adicionado à lista de 'Fui' com sucesso"}
+
+@usuario_router.post("/{usuario_id}/avaliar-evento/{evento_id}", status_code=status.HTTP_201_CREATED, summary="Avaliar um evento")
+def avaliar_evento(
+    evento_id: int, 
+    usuario_id: int, 
+    avaliacao: int = Query(..., ge=1, le=5), # Garante que a avaliação esteja entre 1 e 5
+    db: Session = Depends(get_db)
+):
+    # Verificar se o evento e o usuário existem
+    evento = db.query(ModelEvento).filter(ModelEvento.id == evento_id).first()
+    usuario = db.query(ModelUsuario).filter(ModelUsuario.id == usuario_id).first()
+    if not evento or not usuario:
+        raise HTTPException(status_code=404, detail="Evento ou usuário não encontrado")
+
+    # Verificar se já existe uma avaliação para este evento e usuário
+    avaliacao_existente = db.query(ModelAvaliacao).filter(
+        ModelAvaliacao.evento_id == evento_id,
+        ModelAvaliacao.usuario_id == usuario_id
+    ).first()
+
+    if avaliacao_existente:
+        # Se existir, atualize a avaliação
+        avaliacao_existente.avaliacao = avaliacao
+        db.commit()
+        db.refresh(avaliacao_existente)
+        return avaliacao_existente
+    else:
+        # Se não existir, crie uma nova avaliação
+        nova_avaliacao = ModelAvaliacao(
+            evento_id=evento_id,
+            usuario_id=usuario_id,
+            avaliacao=avaliacao
+        )
+        db.add(nova_avaliacao)
+        db.commit()
+        db.refresh(nova_avaliacao)
+        return nova_avaliacao
