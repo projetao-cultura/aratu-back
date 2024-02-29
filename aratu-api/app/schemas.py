@@ -113,6 +113,7 @@ class UserResponse(BaseModel):
     id: int
     nome: str
     email: EmailStr
+    telefone: str
     categorias_interesse: Optional[List[str]] = []
 
     class Config:
