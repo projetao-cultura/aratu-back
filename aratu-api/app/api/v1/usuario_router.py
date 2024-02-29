@@ -14,7 +14,7 @@ from app.services import usuario_services as service
 
 usuario_router = APIRouter()
 
-@usuario_router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED, summary='Criar um usuário')
+@usuario_router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED, summary='Criar um usuário', tags=["CRUD Usuario"])
 async def criar_usuario(usuario: UsuarioCreate, db: Session = Depends(get_db)):
     # Verifica se o e-mail ou telefone já está cadastrado
     db_usuario = db.query(ModelUsuario).filter(ModelUsuario.email == usuario.email).first()
@@ -43,7 +43,7 @@ async def criar_usuario(usuario: UsuarioCreate, db: Session = Depends(get_db)):
 
     return UserResponse.from_orm(novo_usuario)
 
-@usuario_router.get("/{usuario_id}", response_model=UserResponse, summary='Listar um usuário')
+@usuario_router.get("/{usuario_id}", response_model=UserResponse, summary='Buscar um usuário', tags=["CRUD Usuario"])
 async def buscar_usuario(usuario_id: int, db: Session = Depends(get_db)):
     # Busca o usuário por ID
     usuario = db.query(ModelUsuario).filter(ModelUsuario.id == usuario_id).first()
@@ -51,7 +51,7 @@ async def buscar_usuario(usuario_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
     return UserResponse.from_orm(usuario)
 
-@usuario_router.get("/{usuario_id}/expand", response_model=UserResponseExpand, summary='Buscar um Usuário expandindo Amigos e Eventos (Fui/Quero ir)')
+@usuario_router.get("/{usuario_id}/expand", response_model=UserResponseExpand, summary='Buscar um Usuário expandindo Amigos e Eventos (Fui/Quero ir)', tags=["Busca"])
 async def buscar_usuario(usuario_id: int, db: Session = Depends(get_db)):
     usuario = db.query(ModelUsuario).filter(ModelUsuario.id == usuario_id).first()
     if not usuario:
@@ -82,7 +82,7 @@ async def buscar_usuario(usuario_id: int, db: Session = Depends(get_db)):
     
     return user_response
 
-@usuario_router.put('/{usuario_id}', response_model=UserResponse, summary='Atualizar um Usuário')
+@usuario_router.put('/{usuario_id}', response_model=UserResponse, summary='Atualizar um Usuário', tags=["CRUD Usuario"])
 def update_user(
     user_id: int,
     user: UsuarioUpdate,
@@ -99,17 +99,17 @@ def update_user(
 
     return current_user
 
-@usuario_router.get('/buscar/{nome}', response_model=list[UserResponse], summary='Buscar um Usuário por parte do nome')
+@usuario_router.get('/buscar/{nome}', response_model=list[UserResponse], summary='Buscar um Usuário por parte do nome', tags=["Busca"])
 def buscar_usuario_por_nome(nome: str, db: Session = Depends(get_db)):
     usuarios = db.query(ModelUsuario).filter(ModelUsuario.nome.ilike(f'%{nome}%')).all()
     return [UserResponse.from_orm(usuario) for usuario in usuarios]
 
-@usuario_router.post('/selectedUsers', response_model=list[UserResponse], summary='Listar Usuários por uma lista de ids de usuário')
+@usuario_router.post('/selectedUsers', response_model=list[UserResponse], summary='Buscar Usuários por uma lista de ids de usuário', tags=["Busca"])
 def listar_usuarios(ids: list[int], db: Session = Depends(get_db)):
     usuarios = db.query(ModelUsuario).filter(ModelUsuario.id.in_(ids)).all()
     return [UserResponse.from_orm(usuario) for usuario in usuarios]
 
-@usuario_router.post('/token', response_model=Token, summary='Gerar um Token de Acesso')
+@usuario_router.post('/token', response_model=Token, summary='Gerar um Token de Acesso com as informações do Usuário', tags=["Autenticação"])
 def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
@@ -132,7 +132,7 @@ def login_for_access_token(
 
     return {'access_token': access_token, 'token_type': 'bearer'}
 
-@usuario_router.get("/eventos-de-interesse/{usuario_id}", response_model=List[EventoResponse], summary='Listar Eventos de Interesse do Usuário')
+@usuario_router.get("/eventos-de-interesse/{usuario_id}", response_model=List[EventoResponse], summary='Buscar Eventos de Interesse do Usuário', tags=["Feed"])
 async def eventos_de_interesse_do_usuario(usuario_id: int, db: Session = Depends(get_db)):
     try:
         eventos_de_interesse = await service.get_eventos_interesse(db, usuario_id)
@@ -141,12 +141,12 @@ async def eventos_de_interesse_do_usuario(usuario_id: int, db: Session = Depends
     
     return eventos_de_interesse
 
-@usuario_router.post("/{usuario_id}/amigos/{amigo_id}", status_code=status.HTTP_201_CREATED)
+@usuario_router.post("/{usuario_id}/amigos/{amigo_id}", status_code=status.HTTP_201_CREATED, summary='Adicionar amigo', tags=["Ações do Usuário"])
 async def adicionar_amigo(usuario_id: int, amigo_id: int, db: Session = Depends(get_db)):
     service.adicionar_amigo(db, usuario_id, amigo_id)
     return {"mensagem": "Amigo adicionado com sucesso"}
 
-@usuario_router.post("/{usuario_id}/amigos_lista_contatos", status_code=status.HTTP_201_CREATED, summary='Adicionar amigos por lista de contatos')
+@usuario_router.post("/{usuario_id}/amigos_lista_contatos", status_code=status.HTTP_201_CREATED, summary='Adicionar vários amigos por uma lista de contatos', tags=["Ações do Usuário"])
 async def adicionar_amigos_endpoint(usuario_id: int, telefones: List[str], db: Session = Depends(get_db)):
     try:
         service.adicionar_amigos_por_telefone(db, usuario_id, telefones)
@@ -154,17 +154,17 @@ async def adicionar_amigos_endpoint(usuario_id: int, telefones: List[str], db: S
     except HTTPException as e:
         raise e
 
-@usuario_router.post("/{usuario_id}/quero_ir/{evento_id}", status_code=status.HTTP_201_CREATED)
+@usuario_router.post("/{usuario_id}/quero_ir/{evento_id}", status_code=status.HTTP_201_CREATED, summary= "Adicionar evento à lista de 'Quero Ir'", tags=["Ações do Usuário"])
 async def adicionar_evento_quero_ir(usuario_id: int, evento_id: int, db: Session = Depends(get_db)):
     service.adicionar_evento_quero_ir(db, usuario_id, evento_id)
     return {"mensagem": "Evento adicionado à lista de 'Quero Ir' com sucesso"}
 
-@usuario_router.post("/{usuario_id}/fui/{evento_id}", status_code=status.HTTP_201_CREATED)
+@usuario_router.post("/{usuario_id}/fui/{evento_id}", status_code=status.HTTP_201_CREATED, summary="Adicionar evento à lista de 'Fui'", tags=["Ações do Usuário"])
 async def adicionar_evento_fui(usuario_id: int, evento_id: int, db: Session = Depends(get_db)):
     service.adicionar_evento_fui(db, usuario_id, evento_id)
     return {"mensagem": "Evento adicionado à lista de 'Fui' com sucesso"}
 
-@usuario_router.post("/{usuario_id}/avaliar-evento/{evento_id}", status_code=status.HTTP_201_CREATED, summary="Avaliar um evento")
+@usuario_router.post("/{usuario_id}/avaliar-evento/{evento_id}", status_code=status.HTTP_201_CREATED, summary="Avaliar um evento", tags=["Ações do Usuário"])
 def avaliar_evento(
     evento_id: int, 
     usuario_id: int, 

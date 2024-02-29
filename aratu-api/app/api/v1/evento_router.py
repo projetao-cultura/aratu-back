@@ -14,7 +14,7 @@ from typing import List
 
 evento_router = APIRouter()
 
-@evento_router.post("/", response_model=EventoResponse, status_code=status.HTTP_201_CREATED, summary='Criar um Evento')
+@evento_router.post("/", response_model=EventoResponse, status_code=status.HTTP_201_CREATED, summary='Criar um Evento', tags=["CRUD Evento"])
 async def criar_evento(evento: Evento, db: Session = Depends(get_db)):
     novo_evento = ModelEvento(
     nome=evento.nome,
@@ -41,14 +41,14 @@ async def criar_evento(evento: Evento, db: Session = Depends(get_db)):
 
     return evento_response
 
-@evento_router.get("/{evento_id}", response_model=EventoResponse, status_code=status.HTTP_200_OK, summary='Listar um Evento')
+@evento_router.get("/{evento_id}", response_model=EventoResponse, status_code=status.HTTP_200_OK, summary='Buscar um Evento', tags=["CRUD Evento"])
 async def listar_evento_por_id(evento_id: int, db: Session = Depends(get_db)):
     evento = db.query(ModelEvento).filter(ModelEvento.id == evento_id).first()
     if not evento:
         raise HTTPException(status_code=404, detail="Evento não encontrado")
     return EventoResponse.from_orm(evento)
 
-@evento_router.get("/{evento_id}/expand", response_model=EventoResponseExpand, status_code=status.HTTP_200_OK, summary='Buscar um Evento expandindo usuarios (Fui/Quero ir) e avaliacoes')
+@evento_router.get("/{evento_id}/expand", response_model=EventoResponseExpand, status_code=status.HTTP_200_OK, summary='Buscar um Evento expandindo usuarios (Fui/Quero ir) e avaliacoes', tags=["Busca"])
 async def listar_evento_por_id(evento_id: int, db: Session = Depends(get_db)):
     evento = db.query(ModelEvento).filter(ModelEvento.id == evento_id).first()
     if not evento:
@@ -81,7 +81,7 @@ async def listar_evento_por_id(evento_id: int, db: Session = Depends(get_db)):
     )
     return evento_response
 
-@evento_router.put('/{evento_id}', response_model=EventoResponse, status_code=status.HTTP_200_OK, summary='Atualizar um Evento')
+@evento_router.put('/{evento_id}', response_model=EventoResponse, status_code=status.HTTP_200_OK, summary='Atualizar um Evento', tags=["CRUD Evento"])
 async def update_event(
     evento_id: int,
     evento: Evento,
@@ -108,7 +108,7 @@ async def update_event(
 
     return EventoResponse.from_orm(evento_db)
 
-@evento_router.delete("/{evento_id}", status_code=status.HTTP_204_NO_CONTENT, summary='Excluir um Evento')
+@evento_router.delete("/{evento_id}", status_code=status.HTTP_204_NO_CONTENT, summary='Excluir um Evento', tags=["CRUD Evento"])
 async def deletar_evento(
     evento_id: int, 
     db: Session = Depends(get_db)
@@ -122,7 +122,7 @@ async def deletar_evento(
     
     return Response(content="", status_code=status.HTTP_204_NO_CONTENT)
 
-@evento_router.post("/selectedEvents", response_model=list[EventoResponse], summary='Listar Eventos por uma lista de ids de evento')
+@evento_router.post("/selectedEvents", response_model=list[EventoResponse], summary='Buscar Eventos por uma lista de ids de evento', tags=["Busca"])
 async def listar_eventos_selecionados(
     eventos_ids: List[int],
     db: Session = Depends(get_db)
@@ -135,7 +135,7 @@ async def listar_eventos_selecionados(
     
     return eventos_response
 
-@evento_router.get("/categories/{categoria}", response_model=list[EventoResponse], summary='Listar Eventos por uma categoria')
+@evento_router.get("/categories/{categoria}", response_model=list[EventoResponse], summary='Buscar Eventos por uma categoria', tags=["Feed"])
 async def listar_eventos_por_categoria(
     categoria: str,
     db: Session = Depends(get_db)
@@ -148,7 +148,7 @@ async def listar_eventos_por_categoria(
     
     return eventos_response
 
-@evento_router.post("/selectedCategories/{logicaBusca}", response_model=list[EventoResponse], summary='Listar Eventos por uma lista de categorias', description = "Se logicaBusca for TRUE, buscara com lógica AND, se FALSE, com lógica OR")
+@evento_router.post("/selectedCategories/{logicaBusca}", response_model=list[EventoResponse], summary='Buscar Eventos por uma lista de categorias', description = "Se logicaBusca for TRUE, buscara com lógica AND, se FALSE, com lógica OR", tags=["Feed"])
 async def listar_eventos_por_categorias(
     categorias: List[str],
     logicaBusca: bool = True,
@@ -166,7 +166,7 @@ async def listar_eventos_por_categorias(
     
     return eventos_response
 
-@evento_router.get("/search/{nome}", response_model=list[EventoResponse], summary='Listar Eventos por uma parte do seu nome')
+@evento_router.get("/search/{nome}", response_model=list[EventoResponse], summary='Buscar Eventos por uma parte do seu nome', tags=["Busca"])
 async def listar_eventos_por_nome(
     nome: str,
     db: Session = Depends(get_db)
@@ -179,7 +179,7 @@ async def listar_eventos_por_nome(
     
     return eventos_response
 
-@evento_router.get("/feed", response_model=EventoList)
+@evento_router.get("/feed-provisorio", response_model=EventoList, summary="Buscar todos Eventos (paginado)" , tags=["Feed"])
 async def feed_eventos(
     db: Session = Depends(get_db),
     page: int = Query(ge=1, default=1, description="Número da página para a paginação, começando de 1"),
@@ -206,7 +206,7 @@ async def feed_eventos(
 
     return EventoList(pages=total_pages, eventos=eventos_response)
 
-@evento_router.post("/populate/", status_code=status.HTTP_201_CREATED)
+@evento_router.post("/populate/", status_code=status.HTTP_201_CREATED, summary="Roda o crawler pra popular nossa aplicação com eventos do Sympla", tags=["Carregar Eventos"])
 async def criar_eventos_from_api(db: Session = Depends(get_db)):
     try:
         # Total que vai ser carregado
