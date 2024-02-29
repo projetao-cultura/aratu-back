@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
 
 from app.models.models import Evento as ModelEvento, ControleCarga
-from app.schemas import Evento, EventoList, EventoResponse, EventoResponseExpand, UsuarioMini
+from app.schemas import Evento, EventoList, EventoResponse, EventoResponseExpand, UsuarioMini, AvaliacaoEvento
 from app.db.base import get_db
 from app.services.crowler_sympla import get_eventos_sympla, count_eventos_sympla
 
@@ -56,7 +56,7 @@ async def listar_evento_por_id(evento_id: int, db: Session = Depends(get_db)):
     
     quero_ir = [UsuarioMini(id=user.id) for user in evento.usuarios_que_querem_ir]
     fui = [UsuarioMini(id=user.id) for user in evento.usuarios_que_foram]
-    #avaliaram = [user.id for user in evento.avaliacoes]
+    avaliaram = [AvaliacaoEvento(usuario_id=av.usuario_id, evento_id=av.evento_id, avaliacao=av.avaliacao) for av in evento.avaliacoes]
 
     evento_response = EventoResponseExpand(
         id=evento.id,
@@ -77,7 +77,7 @@ async def listar_evento_por_id(evento_id: int, db: Session = Depends(get_db)):
         onde_comprar_ingressos=evento.onde_comprar_ingressos,
         usuarios_que_querem_ir=quero_ir,
         usuarios_que_foram=fui,
-        #avaliacoes=evento.avaliacoes
+        avaliacoes=avaliaram
     )
     return evento_response
 
