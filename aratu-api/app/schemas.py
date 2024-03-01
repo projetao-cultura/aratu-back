@@ -39,19 +39,7 @@ class EventoMini(BaseModel):
 class AvaliacaoEvento(BaseModel):
     evento_id: int
     usuario_id: int 
-    avaliacao: int  
-
-    @validator('evento_id')
-    def evento_deve_existir(cls, v, values):
-        if v not in values['evento_id']:
-            raise ValueError("Evento não existe")
-        return v
-    
-    @validator('usuario_id')
-    def usuario_deve_existir(cls, v, values):
-        if v not in values['usuario_id']:
-            raise ValueError("Usuário não existe")
-        return v
+    avaliacao: int  # De 1 a 5
 
     @validator('avaliacao')
     def avaliacao_deve_ser_valida(cls, v):
@@ -123,17 +111,19 @@ class UserResponseExpand(UserResponse):
     amigos: List[UsuarioMini] = Field(default_factory=list, description="Lista de amigos do usuario")
     eventos_quero_ir: List[EventoMini] = Field(default_factory=list, description="Lista de eventos que o usuario quer ir")
     eventos_fui: List[EventoMini] = Field(default_factory=list, description="Lista de eventos que o usuario foi")
+    avaliacoes: List[AvaliacaoEvento] = Field(default_factory=list, description="Lista de eventos que o usuario avaliou")
 
 class EventoResponseExpand(EventoResponse):
     usuarios_que_querem_ir: List[UsuarioMini] = Field(default_factory=list, description="Lista de usuários que querem ir ao evento")
     usuarios_que_foram: List[UsuarioMini] = Field(default_factory=list, description="Lista de usuários que foram ao evento")
-    #usuarios_que_avaliaram: List[UsuarioMini] = Field(default_factory=list, description="Lista de usuários que avaliaram o evento")
+    avaliacoes: List[AvaliacaoEvento] = Field(default_factory=list, description="Lista de usuários que avaliaram o evento")
 
 class Token(BaseModel):
     access_token: str
     token_type: str
 
 class TokenData(BaseModel):
+    id: Optional[int] = None
     username: Optional[str] = None
 
 # Para atualizações de eventos ou usuários, permitindo alterar somente os campos específicos
