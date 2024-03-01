@@ -111,6 +111,7 @@ class UserResponseExpand(UserResponse):
     amigos: List[UsuarioMini] = Field(default_factory=list, description="Lista de amigos do usuario")
     eventos_quero_ir: List[EventoMini] = Field(default_factory=list, description="Lista de eventos que o usuario quer ir")
     eventos_fui: List[EventoMini] = Field(default_factory=list, description="Lista de eventos que o usuario foi")
+    avaliacoes: List[AvaliacaoEvento] = Field(default_factory=list, description="Lista de eventos que o usuario avaliou")
 
 class EventoResponseExpand(EventoResponse):
     usuarios_que_querem_ir: List[UsuarioMini] = Field(default_factory=list, description="Lista de usuários que querem ir ao evento")

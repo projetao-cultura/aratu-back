@@ -66,6 +66,7 @@ async def buscar_usuario(usuario_id: int, db: Session = Depends(get_db)):
         EventoMini(id=evento.id, nome=evento.nome, data_hora=evento.data_hora, local=evento.local) 
         for evento in usuario.eventos_fui
     ]
+    avaliacoes = [AvaliacaoEvento(usuario_id=av.usuario_id, evento_id=av.evento_id, avaliacao=av.avaliacao) for av in usuario.avaliacoes]
 
     user_response = UserResponseExpand(
         id=usuario.id,
@@ -77,7 +78,8 @@ async def buscar_usuario(usuario_id: int, db: Session = Depends(get_db)):
         amigos=amigos, 
         eventos_quero_ir=eventos_quero_ir,
         eventos_fui=eventos_fui,
-        categorias_interesse=usuario.categorias_interesse
+        categorias_interesse=usuario.categorias_interesse,
+        avaliacoes=avaliacoes
     )
     
     return user_response
@@ -132,7 +134,7 @@ def login_for_access_token(
 
     return {'access_token': access_token, 'token_type': 'bearer'}
 
-@usuario_router.get("/eventos-de-interesse/{usuario_id}", response_model=List[EventoResponse], summary='Buscar Eventos de Interesse do Usuário', tags=["Feed"])
+@usuario_router.get("/eventos-de-interesse/{usuario_id}", response_model=List[EventoResponse], summary='Buscar Eventos alinhados com as Categorias de Interesse do Usuário', tags=["Feed"])
 async def eventos_de_interesse_do_usuario(usuario_id: int, db: Session = Depends(get_db)):
     try:
         eventos_de_interesse = await service.get_eventos_interesse(db, usuario_id)
