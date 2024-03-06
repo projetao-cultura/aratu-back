@@ -86,20 +86,22 @@ async def buscar_usuario(usuario_id: int, db: Session = Depends(get_db)):
 
 @usuario_router.put('/{usuario_id}', response_model=UserResponse, summary='Atualizar um Usuário', tags=["CRUD Usuario"])
 def update_user(
-    user_id: int,
-    user: UsuarioUpdate,
-    session: Session = Depends(get_db),
-    current_user: ModelUsuario = Depends(get_current_user),
+    usuario_id: int,
+    user_update: UsuarioUpdate,
+    session: Session = Depends(get_db)
 ):
-    if current_user.id != user_id:
-        raise HTTPException(status_code=400, detail='Not enough permissions')
+    user = session.query(ModelUsuario).filter(ModelUsuario.id == usuario_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail='Usuário não encontrado')
 
-    current_user.email = user.email
-    current_user.senha = get_password_hash(user.senha)
+    # Atualiza os campos do usuário com os valores fornecidos, se eles existirem
+    for var, value in vars(user_update).items():
+        setattr(user, var, value) if value else None
+
     session.commit()
-    session.refresh(current_user)
+    session.refresh(user)
 
-    return current_user
+    return user
 
 @usuario_router.get('/buscar/{nome}', response_model=list[UserResponse], summary='Buscar um Usuário por parte do nome', tags=["Busca"])
 def buscar_usuario_por_nome(nome: str, db: Session = Depends(get_db)):

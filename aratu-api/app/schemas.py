@@ -142,6 +142,7 @@ class UsuarioUpdate(BaseModel):
     biografia: Optional[str] = None
     telefone: Optional[str] = None
     foto_perfil: Optional[HttpUrl] = None
+    categorias_interesse: Optional[List[str]] = None
 
 class ControleCargaStatus(str, Enum):
     ERRO = 'ERRO'
