@@ -152,11 +152,8 @@ async def adicionar_amigo(usuario_id: int, amigo_id: int, db: Session = Depends(
 
 @usuario_router.post("/{usuario_id}/amigos_lista_contatos", status_code=status.HTTP_201_CREATED, summary='Adicionar vários amigos por uma lista de contatos', tags=["Ações do Usuário"])
 async def adicionar_amigos_endpoint(usuario_id: int, telefones: List[str], db: Session = Depends(get_db)):
-    try:
-        service.adicionar_amigos_por_telefone(db, usuario_id, telefones)
-        return {"mensagem": "Amigos adicionados com sucesso"}
-    except HTTPException as e:
-        raise e
+    service.adicionar_amigos_por_telefone(db, usuario_id, telefones)
+    return {"mensagem": "Amigos adicionados com sucesso"}
 
 @usuario_router.post("/{usuario_id}/quero_ir/{evento_id}", status_code=status.HTTP_201_CREATED, summary= "Adicionar evento à lista de 'Quero Ir'", tags=["Ações do Usuário"])
 async def adicionar_evento_quero_ir(usuario_id: int, evento_id: int, db: Session = Depends(get_db)):
