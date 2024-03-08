@@ -3,14 +3,17 @@ from math import ceil
 from fastapi import APIRouter, HTTPException, Depends, status, Query
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, func
 
-from app.models.models import Evento as ModelEvento, ControleCarga
+from app.models.models import Evento as ModelEvento, ControleCarga, Usuario as ModelUsuario, usuarios_eventos_querem_ir
 from app.schemas import Evento, EventoList, EventoResponse, EventoResponseExpand, UsuarioMini, AvaliacaoEvento
 from app.db.base import get_db
 from app.services.crowler_sympla import get_eventos_sympla, count_eventos_sympla
 
 from typing import List
+import logging
+
+logger = logging.getLogger(__name__)
 
 evento_router = APIRouter()
 
@@ -146,6 +149,58 @@ async def listar_eventos_por_categoria(
     # Use from_orm para criar uma lista de EventoResponse a partir dos eventos
     eventos_response = [EventoResponse.from_orm(evento) for evento in eventos]
     
+    return eventos_response
+
+@evento_router.get("/populares/", response_model=list[EventoResponse], summary='Top 10 Eventos Populares', tags=["Feed"])
+async def listar_eventos_populares(
+    db: Session = Depends(get_db)
+):
+    # Consulta para contar o número de usuários por evento e ordenar os top 10
+    print("TOP10")
+    logger.info("TOP10")
+    eventos_populares = db.query(
+        ModelEvento,
+        func.count(usuarios_eventos_querem_ir.c.usuario_id).label("quantidade_querem_ir")
+    ).join(
+        usuarios_eventos_querem_ir, ModelEvento.id == usuarios_eventos_querem_ir.c.evento_id
+    ).group_by(
+        ModelEvento.id
+    ).order_by(
+        func.count(usuarios_eventos_querem_ir.c.usuario_id).desc()
+    ).limit(10).all()
+    
+    [print(evento) for evento in eventos_populares]
+    if not eventos_populares:
+        raise HTTPException(status_code=404, detail="Nenhum evento encontrado")
+    
+    eventos_response = [EventoResponse.from_orm(evento) for evento, _ in eventos_populares]
+    
+    return eventos_response
+
+@evento_router.get("/popular-entre-amigos/{user_id}", response_model=list[EventoResponse], summary='Eventos mais populares entre amigos', tags=["Feed"])
+async def eventos_populares_entre_amigos(user_id: int, db: Session = Depends(get_db)):
+    # Verifica se o usuário existe no banco de dados
+    user = db.query(ModelUsuario).filter(ModelUsuario.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    
+    ids_amigos = [amigo.id for amigo in user.amigos]
+
+    # Query para obter os eventos mais populares entre os amigos do usuário
+    eventos = db.query(ModelEvento)\
+                .join(ModelEvento.usuarios_que_querem_ir)\
+                .filter(ModelUsuario.id.in_(ids_amigos))\
+                .group_by(ModelEvento.id)\
+                .order_by(func.count().desc())\
+                .limit(10)\
+                .all()
+
+    if not eventos:
+        raise HTTPException(status_code=404, detail="Nenhum evento encontrado")
+    
+    # Use from_orm para criar uma lista de EventoResponse a partir dos eventos
+    eventos_response = [EventoResponse.from_orm(evento) for evento in eventos]
+
     return eventos_response
 
 @evento_router.post("/selectedCategories/{logicaBusca}", response_model=list[EventoResponse], summary='Buscar Eventos por uma lista de categorias', description = "Se logicaBusca for TRUE, buscara com lógica AND, se FALSE, com lógica OR", tags=["Feed"])
