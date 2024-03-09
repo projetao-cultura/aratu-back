@@ -9,6 +9,7 @@ from app.models.models import Evento as ModelEvento, ControleCarga, Usuario as M
 from app.schemas import Evento, EventoList, EventoResponse, EventoResponseExpand, UsuarioMini, AvaliacaoEvento
 from app.db.base import get_db
 from app.services.crowler_sympla import get_eventos_sympla, count_eventos_sympla
+from app.services import usuario_services as usuario_service
 
 from typing import List
 import logging
@@ -202,6 +203,15 @@ async def eventos_populares_entre_amigos(user_id: int, db: Session = Depends(get
     eventos_response = [EventoResponse.from_orm(evento) for evento in eventos]
 
     return eventos_response
+
+@evento_router.get("/recomendados-para-voce/{usuario_id}", response_model=List[EventoResponse], summary='Buscar Eventos alinhados com as Categorias de Interesse do Usuário', tags=["Feed"])
+async def eventos_de_interesse_do_usuario(usuario_id: int, db: Session = Depends(get_db)):
+    try:
+        eventos_de_interesse = await usuario_service.get_eventos_interesse(db, usuario_id)
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    
+    return eventos_de_interesse
 
 @evento_router.post("/selectedCategories/{logicaBusca}", response_model=list[EventoResponse], summary='Buscar Eventos por uma lista de categorias', description = "Se logicaBusca for TRUE, buscara com lógica AND, se FALSE, com lógica OR", tags=["Feed"])
 async def listar_eventos_por_categorias(
