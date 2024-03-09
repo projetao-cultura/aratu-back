@@ -136,15 +136,6 @@ def login_for_access_token(
 
     return {'access_token': access_token, 'token_type': 'bearer'}
 
-@usuario_router.get("/eventos-de-interesse/{usuario_id}", response_model=List[EventoResponse], summary='Buscar Eventos alinhados com as Categorias de Interesse do Usuário', tags=["Feed"])
-async def eventos_de_interesse_do_usuario(usuario_id: int, db: Session = Depends(get_db)):
-    try:
-        eventos_de_interesse = await service.get_eventos_interesse(db, usuario_id)
-    except Exception as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    
-    return eventos_de_interesse
-
 @usuario_router.post("/{usuario_id}/amigos/{amigo_id}", status_code=status.HTTP_201_CREATED, summary='Adicionar amigo', tags=["Ações do Usuário"])
 async def adicionar_amigo(usuario_id: int, amigo_id: int, db: Session = Depends(get_db)):
     service.adicionar_amigo(db, usuario_id, amigo_id)

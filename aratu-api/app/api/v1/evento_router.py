@@ -9,9 +9,11 @@ from app.models.models import Evento as ModelEvento, ControleCarga, Usuario as M
 from app.schemas import Evento, EventoList, EventoResponse, EventoResponseExpand, UsuarioMini, AvaliacaoEvento
 from app.db.base import get_db
 from app.services.crowler_sympla import get_eventos_sympla, count_eventos_sympla
+from app.services import usuario_services as usuario_service
 
 from typing import List
 import logging
+import random
 
 logger = logging.getLogger(__name__)
 
@@ -138,7 +140,7 @@ async def listar_eventos_selecionados(
     
     return eventos_response
 
-@evento_router.get("/categories/{categoria}", response_model=list[EventoResponse], summary='Buscar Eventos por uma categoria', tags=["Feed"])
+@evento_router.get("/categories/{categoria}", response_model=list[EventoResponse], summary='Buscar Eventos por uma categoria', tags=["Busca"])
 async def listar_eventos_por_categoria(
     categoria: str,
     db: Session = Depends(get_db)
@@ -177,7 +179,7 @@ async def listar_eventos_populares(
     
     return eventos_response
 
-@evento_router.get("/popular-entre-amigos/{user_id}", response_model=list[EventoResponse], summary='Eventos mais populares entre amigos', tags=["Feed"])
+@evento_router.get("/popular-entre-amigos/{user_id}", response_model=list[EventoResponse], summary='Eventos mais populares entre amigos de um usuario', tags=["Feed"])
 async def eventos_populares_entre_amigos(user_id: int, db: Session = Depends(get_db)):
     # Verifica se o usuário existe no banco de dados
     user = db.query(ModelUsuario).filter(ModelUsuario.id == user_id).first()
@@ -201,6 +203,32 @@ async def eventos_populares_entre_amigos(user_id: int, db: Session = Depends(get
     # Use from_orm para criar uma lista de EventoResponse a partir dos eventos
     eventos_response = [EventoResponse.from_orm(evento) for evento in eventos]
 
+    return eventos_response
+
+@evento_router.get("/recomendados-para-voce/{usuario_id}", response_model=List[EventoResponse], summary='Buscar Eventos alinhados com as Categorias de Interesse do Usuário', tags=["Feed"])
+async def eventos_de_interesse_do_usuario(usuario_id: int, db: Session = Depends(get_db)):
+    try:
+        eventos_de_interesse = await usuario_service.get_eventos_interesse(db, usuario_id)
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    
+    return eventos_de_interesse
+
+'''Este endpoint retorna eventos de uma categoria aleatória, a partir de todas as categorias disponíveis no banco de dados.'''
+@evento_router.get("/categoria_aleatoria", response_model=List[EventoResponse], summary='Buscar Eventos por uma categoria aleatória', tags=["Feed"])
+async def listar_eventos_por_categoria_aleatoria(db: Session = Depends(get_db)):
+    categorias = db.query(ModelEvento.categoria).all()
+    categorias_lista = [categoria for sublist in categorias for categoria in sublist[0]]
+    categorias_unicas = list(set(categorias_lista))
+
+    if not categorias_unicas:
+        raise HTTPException(status_code=404, detail="Nenhuma categoria encontrada")
+    
+    categoria_aleatoria = random.choice(categorias_unicas)
+    print(categoria_aleatoria)
+    eventos = db.query(ModelEvento).filter(ModelEvento.categoria.contains([categoria_aleatoria])).all()
+    eventos_response = [EventoResponse.from_orm(evento) for evento in eventos]
+    
     return eventos_response
 
 @evento_router.post("/selectedCategories/{logicaBusca}", response_model=list[EventoResponse], summary='Buscar Eventos por uma lista de categorias', description = "Se logicaBusca for TRUE, buscara com lógica AND, se FALSE, com lógica OR", tags=["Feed"])
@@ -234,7 +262,7 @@ async def listar_eventos_por_nome(
     
     return eventos_response
 
-@evento_router.get("/feed-provisorio", response_model=EventoList, summary="Buscar todos Eventos (paginado)" , tags=["Feed"])
+@evento_router.get("/feed-provisorio", response_model=EventoList, summary="Buscar todos Eventos (paginado)" , tags=["Feed"], include_in_schema=False)
 async def feed_eventos(
     db: Session = Depends(get_db),
     page: int = Query(ge=1, default=1, description="Número da página para a paginação, começando de 1"),
