@@ -281,7 +281,6 @@ async def listar_eventos_por_nome_e_categoria(
     
     return eventos_response
 
-# criar para listar todas as categorias distintas
 @evento_router.get("/categorias/", response_model=list[str], summary='Buscar todas as categorias distintas', tags=["Busca"])
 async def listar_categorias_distintas(db: Session = Depends(get_db)):
     # Busca as categorias distintas
