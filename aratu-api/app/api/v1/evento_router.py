@@ -140,7 +140,7 @@ async def listar_eventos_selecionados(
     
     return eventos_response
 
-@evento_router.get("/categories/{categoria}", response_model=list[EventoResponse], summary='Buscar Eventos por uma categoria', tags=["Busca"])
+@evento_router.get("/categories/{categoria}", response_model=list[EventoResponse], summary='Buscar Eventos por uma categoria', tags=["Feed"])
 async def listar_eventos_por_categoria(
     categoria: str,
     db: Session = Depends(get_db)
@@ -153,7 +153,7 @@ async def listar_eventos_por_categoria(
     
     return eventos_response
 
-@evento_router.get("/populares/", response_model=list[EventoResponse], summary='Top 10 Eventos Populares', tags=["Feed"])
+@evento_router.get("/feed/populares", response_model=list[EventoResponse], summary='Top 10 Eventos Populares', tags=["Feed"])
 async def listar_eventos_populares(
     db: Session = Depends(get_db)
 ):
@@ -179,7 +179,7 @@ async def listar_eventos_populares(
     
     return eventos_response
 
-@evento_router.get("/popular-entre-amigos/{user_id}", response_model=list[EventoResponse], summary='Eventos mais populares entre amigos de um usuario', tags=["Feed"])
+@evento_router.get("/feed/popular-entre-amigos/{user_id}", response_model=list[EventoResponse], summary='Eventos mais populares entre amigos de um usuario', tags=["Feed"])
 async def eventos_populares_entre_amigos(user_id: int, db: Session = Depends(get_db)):
     # Verifica se o usuário existe no banco de dados
     user = db.query(ModelUsuario).filter(ModelUsuario.id == user_id).first()
@@ -205,7 +205,7 @@ async def eventos_populares_entre_amigos(user_id: int, db: Session = Depends(get
 
     return eventos_response
 
-@evento_router.get("/recomendados-para-voce/{usuario_id}", response_model=List[EventoResponse], summary='Buscar Eventos alinhados com as Categorias de Interesse do Usuário', tags=["Feed"])
+@evento_router.get("/feed/recomendados-para-voce/{usuario_id}", response_model=List[EventoResponse], summary='Buscar Eventos alinhados com as Categorias de Interesse do Usuário', tags=["Feed"])
 async def eventos_de_interesse_do_usuario(usuario_id: int, db: Session = Depends(get_db)):
     try:
         eventos_de_interesse = await usuario_service.get_eventos_interesse(db, usuario_id)
@@ -215,7 +215,7 @@ async def eventos_de_interesse_do_usuario(usuario_id: int, db: Session = Depends
     return eventos_de_interesse
 
 '''Este endpoint retorna eventos de uma categoria aleatória, a partir de todas as categorias disponíveis no banco de dados.'''
-@evento_router.get("/categoria_aleatoria", response_model=List[EventoResponse], summary='Buscar Eventos por uma categoria aleatória', tags=["Feed"])
+@evento_router.get("/feed/categoria_aleatoria", response_model=List[EventoResponse], summary='Buscar Eventos por uma categoria aleatória', tags=["Feed"])
 async def listar_eventos_por_categoria_aleatoria(db: Session = Depends(get_db)):
     categorias = db.query(ModelEvento.categoria).all()
     categorias_lista = [categoria for sublist in categorias for categoria in sublist[0]]
@@ -262,7 +262,7 @@ async def listar_eventos_por_nome(
     
     return eventos_response
 
-@evento_router.get("/feed-provisorio", response_model=EventoList, summary="Buscar todos Eventos (paginado)" , tags=["Feed"], include_in_schema=False)
+@evento_router.get("/feed/feed-paginado", response_model=EventoList, summary="Buscar todos Eventos (paginado)" , tags=["Feed"], include_in_schema=False)
 async def feed_eventos(
     db: Session = Depends(get_db),
     page: int = Query(ge=1, default=1, description="Número da página para a paginação, começando de 1"),
