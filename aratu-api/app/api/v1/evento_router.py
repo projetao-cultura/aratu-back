@@ -262,7 +262,7 @@ async def listar_eventos_por_nome(
     
     return eventos_response
 
-@evento_router.get("/search/nome-categoria", response_model=list[EventoResponse], summary='Buscar Eventos por uma parte do seu nome e/ou categoria', tags=["Busca"])
+@evento_router.get("/search/nome-categoria/", response_model=list[EventoResponse], summary='Buscar Eventos por uma parte do seu nome e/ou categoria', tags=["Busca"])
 async def listar_eventos_por_nome_e_categoria(
     nome: str = None,
     categoria: str = None,
