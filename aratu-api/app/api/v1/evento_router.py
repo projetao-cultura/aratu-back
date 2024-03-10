@@ -262,6 +262,26 @@ async def listar_eventos_por_nome(
     
     return eventos_response
 
+@evento_router.get("/search/nome-categoria", response_model=list[EventoResponse], summary='Buscar Eventos por uma parte do seu nome e/ou categoria', tags=["Busca"])
+async def listar_eventos_por_nome_e_categoria(
+    nome: str = None,
+    categoria: str = None,
+    db: Session = Depends(get_db)
+):
+    # Busca os eventos por nome e/ou categoria
+    query = db.query(ModelEvento)
+    if nome:
+        query = query.filter(ModelEvento.nome.ilike(f"%{nome}%"))
+    if categoria:
+        query = query.filter(ModelEvento.categoria.contains([categoria]))
+    eventos = query.all()
+    
+    # Use from_orm para criar uma lista de EventoResponse a partir dos eventos
+    eventos_response = [EventoResponse.from_orm(evento) for evento in eventos]
+    
+    return eventos_response
+
+
 @evento_router.get("/feed/feed-paginado", response_model=EventoList, summary="Buscar todos Eventos (paginado)" , tags=["Feed"], include_in_schema=False)
 async def feed_eventos(
     db: Session = Depends(get_db),
