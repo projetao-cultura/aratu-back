@@ -138,6 +138,28 @@ def login_for_access_token(
 
     return {'access_token': access_token, 'token_type': 'bearer'}
 
+@usuario_router.put('/{usuario_id}/alterar_senha', summary='Alterar a senha do usuário', tags=["Ações do Usuário"])
+def alterar_senha(
+    usuario_id: int,
+    senha_antiga: str = Query(..., description="Senha antiga do usuário"),
+    nova_senha: str = Query(..., description="Nova senha do usuário"),
+    db: Session = Depends(get_db)
+):
+    usuario = db.query(ModelUsuario).filter(ModelUsuario.id == usuario_id).first()
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+
+    if not verify_password(senha_antiga, usuario.senha):
+        raise HTTPException(status_code=400, detail="Senha antiga incorreta")
+    
+    if senha_antiga == nova_senha:
+        raise HTTPException(status_code=400, detail="A nova senha não pode ser igual a senha antiga")
+
+    usuario.senha = get_password_hash(nova_senha)
+    db.commit()
+    db.refresh(usuario)
+    return usuario
+
 @usuario_router.post("/{usuario_id}/amigos/{amigo_id}", status_code=status.HTTP_201_CREATED, summary='Adicionar amigo', tags=["Ações do Usuário"])
 async def adicionar_amigo(usuario_id: int, amigo_id: int, db: Session = Depends(get_db)):
     service.adicionar_amigo(db, usuario_id, amigo_id)
