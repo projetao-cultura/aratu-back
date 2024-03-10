@@ -102,6 +102,8 @@ class UserResponse(BaseModel):
     nome: str
     email: EmailStr
     telefone: str
+    biografia: Optional[str] = None
+    foto_perfil: Optional[HttpUrl] = None
     categorias_interesse: Optional[List[str]] = []
 
     class Config:
