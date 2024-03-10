@@ -11,7 +11,7 @@ async def get_eventos_interesse(session, usuario_id):
     # Agora, filtramos os eventos que possuem interseção com as categorias de interesse
     eventos_de_interesse = session.query(Evento).filter(
         Evento.categoria.overlap(categorias_interesse)
-    ).all()
+    ).limit(15).all()
 
     return eventos_de_interesse
 

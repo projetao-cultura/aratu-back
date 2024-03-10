@@ -169,7 +169,7 @@ async def listar_eventos_populares(
         ModelEvento.id
     ).order_by(
         func.count(usuarios_eventos_querem_ir.c.usuario_id).desc()
-    ).limit(10).all()
+    ).limit(15).all()
     
     [print(evento) for evento in eventos_populares]
     if not eventos_populares:
@@ -194,7 +194,7 @@ async def eventos_populares_entre_amigos(user_id: int, db: Session = Depends(get
                 .filter(ModelUsuario.id.in_(ids_amigos))\
                 .group_by(ModelEvento.id)\
                 .order_by(func.count().desc())\
-                .limit(10)\
+                .limit(15)\
                 .all()
 
     if not eventos:
@@ -226,7 +226,7 @@ async def listar_eventos_por_categoria_aleatoria(db: Session = Depends(get_db)):
     
     categoria_aleatoria = random.choice(categorias_unicas)
     print(categoria_aleatoria)
-    eventos = db.query(ModelEvento).filter(ModelEvento.categoria.contains([categoria_aleatoria])).all()
+    eventos = db.query(ModelEvento).filter(ModelEvento.categoria.contains([categoria_aleatoria])).limit(15).all()
     eventos_response = [EventoResponse.from_orm(evento) for evento in eventos]
     
     return eventos_response
