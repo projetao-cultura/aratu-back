@@ -30,6 +30,22 @@ def adicionar_amigo(session, usuario_id, amigo_id):
     usuario.amigos.append(amigo)  # Adiciona amigo à lista de amigos do usuário
     session.commit()
 
+def remover_amigo(session, usuario_id, amigo_id):
+    if usuario_id == amigo_id:
+        raise HTTPException(status_code=400, detail="Não é possível remover a si mesmo da lista de amigos.")
+    
+    usuario = session.query(Usuario).filter(Usuario.id == usuario_id).first()
+    amigo = session.query(Usuario).filter(Usuario.id == amigo_id).first()
+
+    if not usuario or not amigo:
+        raise HTTPException(status_code=404, detail="Usuário ou amigo não encontrado.")
+    
+    if amigo not in usuario.amigos:
+        raise HTTPException(status_code=404, detail="Este amigo não está na sua lista de amigos.")
+    
+    usuario.amigos.remove(amigo)  # Remove o amigo da lista de amigos do usuário
+    session.commit()
+
 def adicionar_amigos_por_telefone(session, usuario_id: int, telefones: List[str]):
     usuario = session.query(Usuario).filter(Usuario.id == usuario_id).first()
     if not usuario:
@@ -72,10 +88,3 @@ def adicionar_evento_fui(session, usuario_id, evento_id):
 
     usuario.eventos_fui.append(evento)
     session.commit()
-
-def remover_amigo(session, usuario_id, amigo_id):
-    usuario = session.query(Usuario).filter(Usuario.id == usuario_id).first()
-    amigo = session.query(Usuario).filter(Usuario.id == amigo_id).first()
-    if usuario and amigo:
-        usuario.amigos.remove(amigo)
-        session.commit()
