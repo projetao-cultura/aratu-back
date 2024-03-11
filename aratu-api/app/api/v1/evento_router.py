@@ -59,6 +59,10 @@ async def listar_evento_por_id(evento_id: int, db: Session = Depends(get_db)):
     if not evento:
         raise HTTPException(status_code=404, detail="Evento não encontrado")
     
+    # Calcula a média das avaliações
+    avaliacoes_notas = [av.avaliacao for av in evento.avaliacoes]
+    avaliacao_media = round(sum(avaliacoes_notas) / len(avaliacoes_notas), 1) if avaliacoes_notas else None
+    
     quero_ir = [UsuarioMini(id=user.id) for user in evento.usuarios_que_querem_ir]
     fui = [UsuarioMini(id=user.id) for user in evento.usuarios_que_foram]
     avaliaram = [AvaliacaoEvento(usuario_id=av.usuario_id, evento_id=av.evento_id, avaliacao=av.avaliacao) for av in evento.avaliacoes]
@@ -69,6 +73,7 @@ async def listar_evento_por_id(evento_id: int, db: Session = Depends(get_db)):
         descricao=evento.descricao,
         banner=evento.banner,
         categoria=evento.categoria,
+        avaliacao=avaliacao_media,
         local=evento.local,
         endereco=evento.endereco,
         data_hora=evento.data_hora,
@@ -290,7 +295,7 @@ async def listar_categorias_distintas(db: Session = Depends(get_db)):
     
     return categorias_unicas
 
-@evento_router.get("/feed/feed-paginado", response_model=EventoList, summary="Buscar todos Eventos (paginado)" , tags=["Feed"], include_in_schema=False)
+@evento_router.get("/feed/todos-paginado", response_model=EventoList, summary="Buscar todos Eventos (paginado)" , tags=["Feed"])
 async def feed_eventos(
     db: Session = Depends(get_db),
     page: int = Query(ge=1, default=1, description="Número da página para a paginação, começando de 1"),
