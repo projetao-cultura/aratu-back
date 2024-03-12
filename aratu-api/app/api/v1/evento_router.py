@@ -63,8 +63,8 @@ async def listar_evento_por_id(evento_id: int, db: Session = Depends(get_db)):
     avaliacoes_notas = [av.avaliacao for av in evento.avaliacoes]
     avaliacao_media = round(sum(avaliacoes_notas) / len(avaliacoes_notas), 1) if avaliacoes_notas else None
     
-    quero_ir = [UsuarioMini(id=user.id) for user in evento.usuarios_que_querem_ir]
-    fui = [UsuarioMini(id=user.id) for user in evento.usuarios_que_foram]
+    quero_ir = [UsuarioMini(id=user.id, foto_perfil=user.foto_perfil) for user in evento.usuarios_que_querem_ir]
+    fui = [UsuarioMini(id=user.id, foto_perfil=user.foto_perfil) for user in evento.usuarios_que_foram]
     avaliaram = [AvaliacaoEvento(usuario_id=av.usuario_id, evento_id=av.evento_id, avaliacao=av.avaliacao) for av in evento.avaliacoes]
 
     evento_response = EventoResponseExpand(

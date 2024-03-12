@@ -85,6 +85,7 @@ class UsuarioCreate(UsuarioBase):
     
 class UsuarioMini(BaseModel):
     id: int
+    foto_perfil: Optional[HttpUrl] = "https://i.imgur.com/JUf7jx3.jpeg"
 
 class Usuario(UsuarioBase):
     id: Optional[int] = Field(None, description="ID do usuário, gerado automaticamente")
