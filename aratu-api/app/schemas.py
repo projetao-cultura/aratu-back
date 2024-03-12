@@ -32,6 +32,8 @@ class EventoMini(BaseModel):
     nome: str
     data_hora: datetime
     local: str
+    banner: Optional[HttpUrl] = None
+    avaliacao: Optional[float] = None
 
     class Config:
         orm_mode = True

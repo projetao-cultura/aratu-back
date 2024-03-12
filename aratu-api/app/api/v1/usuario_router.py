@@ -61,11 +61,11 @@ async def buscar_usuario(usuario_id: int, db: Session = Depends(get_db)):
     
     amigos = [UsuarioMini(id=amigo.id) for amigo in usuario.amigos]
     eventos_quero_ir = [
-        EventoMini(id=evento.id, nome=evento.nome, data_hora=evento.data_hora, local=evento.local)  
+        EventoMini(id=evento.id, nome=evento.nome, data_hora=evento.data_hora, local=evento.local, banner=evento.banner, avaliacao=round(sum([av.avaliacao for av in evento.avaliacoes]) / len([av.avaliacao for av in evento.avaliacoes]), 1))  
         for evento in usuario.eventos_quero_ir
     ]
     eventos_fui = [
-        EventoMini(id=evento.id, nome=evento.nome, data_hora=evento.data_hora, local=evento.local) 
+        EventoMini(id=evento.id, nome=evento.nome, data_hora=evento.data_hora, local=evento.local, banner=evento.banner, avaliacao=round(sum([av.avaliacao for av in evento.avaliacoes]) / len([av.avaliacao for av in evento.avaliacoes]), 1)) 
         for evento in usuario.eventos_fui
     ]
     avaliacoes = [AvaliacaoEvento(usuario_id=av.usuario_id, evento_id=av.evento_id, avaliacao=av.avaliacao) for av in usuario.avaliacoes]
