@@ -1,6 +1,7 @@
 from fastapi import HTTPException
 from typing import List
-from app.models.models import Usuario, Evento
+from app.models.models import Usuario, Evento, Avaliacao
+from sqlalchemy import func
 from sqlalchemy.exc import NoResultFound
 
 async def get_eventos_interesse(session, usuario_id):
@@ -88,3 +89,25 @@ def adicionar_evento_fui(session, usuario_id, evento_id):
 
     usuario.eventos_fui.append(evento)
     session.commit()
+
+def buscar_usuario_com_eventos_e_medias(session, usuario_id: int):
+    # Substitua ModelEvento, ModelAvaliacao, etc., pelos nomes reais dos seus modelos
+    eventos_quero_ir = session.query(
+        Evento.id,
+        Evento.nome,
+        Evento.data_hora,
+        Evento.local,
+        Evento.banner,
+        func.coalesce(func.round(func.avg(Avaliacao.avaliacao), 1), 0).label("media_avaliacao")
+    ).outerjoin(Avaliacao).filter(Evento.usuarios_que_querem_ir.any(id=usuario_id)).group_by(Evento.id).all()
+
+    eventos_fui = session.query(
+        Evento.id,
+        Evento.nome,
+        Evento.data_hora,
+        Evento.local,
+        Evento.banner,
+        func.coalesce(func.round(func.avg(Avaliacao.avaliacao), 1), 0).label("media_avaliacao")
+    ).outerjoin(Avaliacao).filter(Evento.usuarios_que_foram.any(id=usuario_id)).group_by(Evento.id).all()
+
+    return eventos_quero_ir, eventos_fui

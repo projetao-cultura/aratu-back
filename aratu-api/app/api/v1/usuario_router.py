@@ -3,12 +3,12 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from typing import List
 
-from app.core.auth import get_current_user, get_password_hash, create_access_token, verify_password
+from app.core.auth import get_password_hash, create_access_token, verify_password
 from app.models.models import Usuario as ModelUsuario
 from app.models.models import Evento as ModelEvento
 from app.models.models import Avaliacao as ModelAvaliacao
 from app.schemas import AvaliacaoEvento
-from app.schemas import UserResponse, UserResponseExpand, UsuarioCreate, UsuarioUpdate, UsuarioMini, Token, EventoResponse, EventoMini
+from app.schemas import UserResponse, UserResponseExpand, UsuarioCreate, UsuarioUpdate, UsuarioMini, Token, EventoMini
 from app.db.base import get_db
 from app.services import usuario_services as service
 
@@ -60,13 +60,19 @@ async def buscar_usuario(usuario_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
     
     amigos = [UsuarioMini(id=amigo.id) for amigo in usuario.amigos]
+    
+    eventos_quero_ir, eventos_fui = service.buscar_usuario_com_eventos_e_medias(db, usuario_id)
+    
     eventos_quero_ir = [
-        EventoMini(id=evento.id, nome=evento.nome, data_hora=evento.data_hora, local=evento.local, banner=evento.banner, avaliacao=round(sum([av.avaliacao for av in evento.avaliacoes]) / len([av.avaliacao for av in evento.avaliacoes]), 1))  
-        for evento in usuario.eventos_quero_ir
+        EventoMini(id=evento.id, nome=evento.nome, data_hora=evento.data_hora,
+                   local=evento.local, banner=evento.banner, avaliacao=evento.media_avaliacao)
+        for evento in eventos_quero_ir
     ]
+    
     eventos_fui = [
-        EventoMini(id=evento.id, nome=evento.nome, data_hora=evento.data_hora, local=evento.local, banner=evento.banner, avaliacao=round(sum([av.avaliacao for av in evento.avaliacoes]) / len([av.avaliacao for av in evento.avaliacoes]), 1)) 
-        for evento in usuario.eventos_fui
+        EventoMini(id=evento.id, nome=evento.nome, data_hora=evento.data_hora,
+                   local=evento.local, banner=evento.banner, avaliacao=evento.media_avaliacao)
+        for evento in eventos_fui
     ]
     avaliacoes = [AvaliacaoEvento(usuario_id=av.usuario_id, evento_id=av.evento_id, avaliacao=av.avaliacao) for av in usuario.avaliacoes]
 
