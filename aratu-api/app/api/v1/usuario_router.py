@@ -191,6 +191,16 @@ async def adicionar_evento_fui(usuario_id: int, evento_id: int, db: Session = De
     service.adicionar_evento_fui(db, usuario_id, evento_id)
     return {"mensagem": "Evento adicionado à lista de 'Fui' com sucesso"}
 
+@usuario_router.delete("/{usuario_id}/quero_ir/{evento_id}", status_code=status.HTTP_200_OK, summary="Remover evento da lista de 'Quero Ir'", tags=["Ações do Usuário"])
+async def remover_evento_quero_ir(usuario_id: int, evento_id: int, db: Session = Depends(get_db)):
+    service.remover_evento_quero_ir(db, usuario_id, evento_id)
+    return {"mensagem": "Evento removido da lista de 'Quero Ir' com sucesso"}
+
+@usuario_router.delete("/{usuario_id}/fui/{evento_id}", status_code=status.HTTP_200_OK, summary="Remover evento da lista de 'Fui'", tags=["Ações do Usuário"])
+async def remover_evento_fui(usuario_id: int, evento_id: int, db: Session = Depends(get_db)):
+    service.remover_evento_fui(db, usuario_id, evento_id)
+    return {"mensagem": "Evento removido da lista de 'Fui' com sucesso"}
+
 @usuario_router.post("/{usuario_id}/avaliar-evento/{evento_id}", status_code=status.HTTP_201_CREATED, summary="Avaliar um evento", tags=["Ações do Usuário"])
 def avaliar_evento(
     evento_id: int, 

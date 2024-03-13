@@ -90,6 +90,32 @@ def adicionar_evento_fui(session, usuario_id, evento_id):
     usuario.eventos_fui.append(evento)
     session.commit()
 
+def remover_evento_quero_ir(session, usuario_id, evento_id):
+    usuario = session.query(Usuario).filter(Usuario.id == usuario_id).first()
+    evento = session.query(Evento).filter(Evento.id == evento_id).first()
+    
+    if not usuario or not evento:
+        raise HTTPException(status_code=404, detail="Usuário ou evento não encontrado.")
+
+    if evento not in usuario.eventos_quero_ir:
+        raise HTTPException(status_code=400, detail="Evento não está na lista de 'Quero Ir'.")
+
+    usuario.eventos_quero_ir.remove(evento)
+    session.commit()
+
+def remover_evento_fui(session, usuario_id, evento_id):
+    usuario = session.query(Usuario).filter(Usuario.id == usuario_id).first()
+    evento = session.query(Evento).filter(Evento.id == evento_id).first()
+    
+    if not usuario or not evento:
+        raise HTTPException(status_code=404, detail="Usuário ou evento não encontrado.")
+
+    if evento not in usuario.eventos_fui:
+        raise HTTPException(status_code=400, detail="Evento não está na lista de 'Fui'.")
+
+    usuario.eventos_fui.remove(evento)
+    session.commit()
+
 def buscar_usuario_com_eventos_e_medias(session, usuario_id: int):
     # Substitua ModelEvento, ModelAvaliacao, etc., pelos nomes reais dos seus modelos
     eventos_quero_ir = session.query(
