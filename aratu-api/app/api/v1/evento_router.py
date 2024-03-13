@@ -91,6 +91,55 @@ async def listar_evento_por_id(evento_id: int, db: Session = Depends(get_db)):
     )
     return evento_response
 
+@evento_router.get("/{evento_id}/expand/{user_id}", response_model=EventoResponseExpand, status_code=status.HTTP_200_OK, summary='Buscar um Evento expandindo usuarios (Fui/Quero ir) e avaliacoes', tags=["Busca"])
+async def listar_evento_por_id(evento_id: int, user_id: int, db: Session = Depends(get_db)):
+    evento = db.query(ModelEvento).filter(ModelEvento.id == evento_id).first()
+    if not evento:
+        raise HTTPException(status_code=404, detail="Evento não encontrado")
+    
+    # Encontra o usuário pelo ID
+    usuario = db.query(ModelUsuario).filter(ModelUsuario.id == user_id).first()
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    
+    # Verifica se o usuário especificado quer ir ou já foi a esse evento
+    quero_ir_state = any(user.id == user_id for user in evento.usuarios_que_querem_ir)
+    fui_state = any(user.id == user_id for user in evento.usuarios_que_foram)
+    
+    # Calcula a média das avaliações
+    avaliacoes_notas = [av.avaliacao for av in evento.avaliacoes]
+    avaliacao_media = round(sum(avaliacoes_notas) / len(avaliacoes_notas), 1) if avaliacoes_notas else None
+    
+    quero_ir = [UsuarioMini(id=user.id, foto_perfil=user.foto_perfil) for user in evento.usuarios_que_querem_ir]
+    fui = [UsuarioMini(id=user.id, foto_perfil=user.foto_perfil) for user in evento.usuarios_que_foram]
+    avaliaram = [AvaliacaoEvento(usuario_id=av.usuario_id, evento_id=av.evento_id, avaliacao=av.avaliacao) for av in evento.avaliacoes]
+
+    evento_response = EventoResponseExpand(
+        id=evento.id,
+        nome=evento.nome,
+        descricao=evento.descricao,
+        banner=evento.banner,
+        categoria=evento.categoria,
+        avaliacao=avaliacao_media,
+        local=evento.local,
+        endereco=evento.endereco,
+        data_hora=evento.data_hora,
+        data_fim=evento.data_fim,
+        id_sistema_origem=evento.id_sistema_origem,
+        fonte=evento.fonte,
+        organizador=evento.organizador,
+        gratis=evento.gratis,
+        atualizado_em=evento.atualizado_em,
+        valor=evento.valor,
+        onde_comprar_ingressos=evento.onde_comprar_ingressos,
+        usuarios_que_querem_ir=quero_ir,
+        usuarios_que_foram=fui,
+        avaliacoes=avaliaram,
+        quero_ir_state=quero_ir_state,
+        fui_state=fui_state
+    )
+    return evento_response
+
 @evento_router.put('/{evento_id}', response_model=EventoResponse, status_code=status.HTTP_200_OK, summary='Atualizar um Evento', tags=["CRUD Evento"])
 async def update_event(
     evento_id: int,

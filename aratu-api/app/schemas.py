@@ -122,6 +122,8 @@ class EventoResponseExpand(EventoResponse):
     usuarios_que_querem_ir: List[UsuarioMini] = Field(default_factory=list, description="Lista de usuários que querem ir ao evento")
     usuarios_que_foram: List[UsuarioMini] = Field(default_factory=list, description="Lista de usuários que foram ao evento")
     avaliacoes: List[AvaliacaoEvento] = Field(default_factory=list, description="Lista de usuários que avaliaram o evento")
+    quero_ir_state: Optional[bool] = None
+    fui_state: Optional[bool] = None
 
 class Token(BaseModel):
     access_token: str
