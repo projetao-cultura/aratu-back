@@ -423,6 +423,7 @@ async def criar_eventos_from_api(db: Session = Depends(get_db)):
                     data_hora=evento_api["start_date"],
                     data_fim=evento_api["end_date"],
                     banner=evento_api["images"]["original"],
+                    onde_comprar_ingressos=evento_api["url"],
                     id_sistema_origem=evento_api["id"],
                     fonte=controle_carga.fonte,
                     organizador=evento_api['organizer']['name'],
