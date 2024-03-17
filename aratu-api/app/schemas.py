@@ -76,6 +76,7 @@ class UsuarioBase(BaseModel):
 class UsuarioCreate(UsuarioBase):
     senha: str
     categorias_interesse: Optional[List[str]] = []
+    lista_contatos: Optional[List[str]] = []
 
     @validator("senha")
     def senha_nao_nula(cls, v: str) -> str:

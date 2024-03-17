@@ -43,6 +43,9 @@ async def criar_usuario(usuario: UsuarioCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(novo_usuario)
 
+    if usuario.lista_contatos:
+        service.adicionar_amigos_por_telefone(db, novo_usuario.id, usuario.lista_contatos)
+
     return UserResponse.from_orm(novo_usuario)
 
 @usuario_router.get("/{usuario_id}", response_model=UserResponse, summary='Buscar um usuário', tags=["CRUD Usuario"])
