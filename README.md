@@ -1,6 +1,9 @@
 # Aratu API v0.1
 
-Bem-vindo à Aratu API, o backend da aplicação Aratu, um app de fomento ao turismo local em Recife-Pernambuco. Esta API fornece os serviços e dados necessários para explorar os pontos turísticos, eventos e atrações da região.
+Bem-vindo à Aratu API, o backend da aplicação Aratu, um app de fomento ao turismo local em Recife-Pernambuco. Esta API fornece os serviços e dados necessários para explorar os pontos turísticos, eventos e atrações da região.\
+
+![aratu-backend](https://github.com/user-attachments/assets/498686ad-412c-427b-a0a6-dace33681f73)
+
 
 ## Como Rodar Localmente
 
